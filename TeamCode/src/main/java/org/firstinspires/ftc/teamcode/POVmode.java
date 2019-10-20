@@ -50,12 +50,14 @@ public class POVmode extends LinearOpMode {
 
     // Constants
     final private float FAST_DRIVE_MULTIPLE = 1f;           // multiple for driving
-    final private double ARM_EXTEND_MULTIPLE = .5;           // multiple for arm extend
-    final private double WRIST_TURN_MULTIPLE = 0.005;       // multiple for wrist turn fine tuning
+    final private double WRIST_TURN_MULTIPLE = 0.005;       //multiple for wrist turn fine tuning
+    final private double ARM_EXTEND_MULTIPLE = 1;      //multiple for arm extend
     final private double WRIST_TURN_HORIZONTAL = 0.5;       // wrist turn for horizontal block
     final private double WRIST_TURN_VERTICAL = 0.0;         // wrist turn for vertical block
-    final private double FINGERS_OPEN = 0.0;                // open claw
+    final private double FINGERS_OPEN = 0.05;               // open claw
     final private double FINGERS_CLOSED = 0.5;             // closed claw
+    final private double FOUNDATION_GRABBER_DOWN = 0.25;     //grabber down
+    final private double FOUNDATION_GRABBER_UP = 0.85;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -66,9 +68,10 @@ public class POVmode extends LinearOpMode {
     private DcMotor backRightDriveMotor = null;
     private DcMotor armRotateMotor = null;
     private DcMotor armExtendMotor = null;
-    private Servo clawElbow = null;
-    private Servo clawWrist = null;
-    private Servo clawFingers = null;
+    private Servo clawElbowServo = null;
+    private Servo clawWristServo = null;
+    private Servo clawFingersServo = null;
+    private Servo foundationGrabberServo = null;
     private DigitalChannel armLimitTouchFront = null;
     private DigitalChannel armLimitTouchBack = null;
 
@@ -88,9 +91,10 @@ public class POVmode extends LinearOpMode {
         // game controller #2
         armRotateMotor = hardwareMap.get(DcMotor.class, "arm_rotate_motor");
         armExtendMotor = hardwareMap.get(DcMotor.class, "arm_lift_motor");
-        clawElbow = hardwareMap.get(Servo.class, "claw_elbow");
-        clawWrist = hardwareMap.get(Servo.class, "claw_wrist");
-        clawFingers = hardwareMap.get(Servo.class, "claw_fingers");
+        clawElbowServo = hardwareMap.get(Servo.class, "claw_elbow");
+        clawWristServo = hardwareMap.get(Servo.class, "claw_wrist");
+        clawFingersServo = hardwareMap.get(Servo.class, "claw_fingers");
+        foundationGrabberServo = hardwareMap.get(Servo.class, "foundation_grabber");
 
         armLimitTouchFront = hardwareMap.get(DigitalChannel.class, "arm_limit_touch_front");
         armLimitTouchBack = hardwareMap.get(DigitalChannel.class, "arm_limit_touch_back");
@@ -103,8 +107,15 @@ public class POVmode extends LinearOpMode {
         backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
-        clawWrist.setPosition(WRIST_TURN_HORIZONTAL);
-        clawFingers.setPosition(FINGERS_OPEN);
+
+        clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);//set wrist position at init
+        clawFingersServo.setPosition(FINGERS_OPEN);//set fingers position at init
+        foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);//set grabber position on init
+
+        int armExtendPosition;
+        armExtendMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);//reset encoder at init
+        armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
@@ -115,7 +126,7 @@ public class POVmode extends LinearOpMode {
         while (opModeIsActive()) {
 
 
-              // DRIVER 1 : Gamepad 1 controls
+            // DRIVER 1 : Gamepad 1 controls
 
             double multiple = 1;                                            // set multiples for drive and side motions
             double drive = gamepad1.left_stick_y;
@@ -124,34 +135,29 @@ public class POVmode extends LinearOpMode {
 
             if (drive < 0) {                                                 // use left stick y to move forward
                 multiple = -1 * drive;
-                frontLeftDriveMotor.setPower(multiple*-FAST_DRIVE_MULTIPLE);
-                frontRightDriveMotor.setPower(multiple*-FAST_DRIVE_MULTIPLE);
-                backLeftDriveMotor.setPower(multiple*-FAST_DRIVE_MULTIPLE);
-                backRightDriveMotor.setPower(multiple*-FAST_DRIVE_MULTIPLE);
-            }
-            else if (drive > 0) {                                           // use left stick y to move back
+                frontLeftDriveMotor.setPower(multiple * -FAST_DRIVE_MULTIPLE);
+                frontRightDriveMotor.setPower(multiple * -FAST_DRIVE_MULTIPLE);
+                backLeftDriveMotor.setPower(multiple * -FAST_DRIVE_MULTIPLE);
+                backRightDriveMotor.setPower(multiple * -FAST_DRIVE_MULTIPLE);
+            } else if (drive > 0) {                                           // use left stick y to move back
                 multiple = drive;
-                frontLeftDriveMotor.setPower(multiple*FAST_DRIVE_MULTIPLE);
-                frontRightDriveMotor.setPower(multiple*FAST_DRIVE_MULTIPLE);
-                backLeftDriveMotor.setPower(multiple*FAST_DRIVE_MULTIPLE);
-                backRightDriveMotor.setPower(multiple*FAST_DRIVE_MULTIPLE);
-            }
-
-            else if (side > 0) {                                            // use right stick x to move right
+                frontLeftDriveMotor.setPower(multiple * FAST_DRIVE_MULTIPLE);
+                frontRightDriveMotor.setPower(multiple * FAST_DRIVE_MULTIPLE);
+                backLeftDriveMotor.setPower(multiple * FAST_DRIVE_MULTIPLE);
+                backRightDriveMotor.setPower(multiple * FAST_DRIVE_MULTIPLE);
+            } else if (side > 0) {                                            // use right stick x to move right
                 multiple = side;
-                frontRightDriveMotor.setPower(multiple*FAST_DRIVE_MULTIPLE);
-                frontLeftDriveMotor.setPower(multiple*-FAST_DRIVE_MULTIPLE);
-                backLeftDriveMotor.setPower(multiple*FAST_DRIVE_MULTIPLE);
-                backRightDriveMotor.setPower(multiple*-FAST_DRIVE_MULTIPLE);
-            }
-            else if (side < 0) {                                            // use right stick x to move left
+                frontRightDriveMotor.setPower(multiple * FAST_DRIVE_MULTIPLE);
+                frontLeftDriveMotor.setPower(multiple * -FAST_DRIVE_MULTIPLE);
+                backLeftDriveMotor.setPower(multiple * FAST_DRIVE_MULTIPLE);
+                backRightDriveMotor.setPower(multiple * -FAST_DRIVE_MULTIPLE);
+            } else if (side < 0) {                                            // use right stick x to move left
                 multiple = -1 * side;
-                frontRightDriveMotor.setPower(multiple*-FAST_DRIVE_MULTIPLE);
-                frontLeftDriveMotor.setPower(multiple*FAST_DRIVE_MULTIPLE);
-                backLeftDriveMotor.setPower(multiple*-FAST_DRIVE_MULTIPLE);
-                backRightDriveMotor.setPower(multiple*FAST_DRIVE_MULTIPLE);
-            }
-            else if (gamepad1.left_bumper) {                              // use left bumper for turning left
+                frontRightDriveMotor.setPower(multiple * -FAST_DRIVE_MULTIPLE);
+                frontLeftDriveMotor.setPower(multiple * FAST_DRIVE_MULTIPLE);
+                backLeftDriveMotor.setPower(multiple * -FAST_DRIVE_MULTIPLE);
+                backRightDriveMotor.setPower(multiple * FAST_DRIVE_MULTIPLE);
+            } else if (gamepad1.left_bumper) {                              // use left bumper for turning left
                 frontLeftDriveMotor.setPower(FAST_DRIVE_MULTIPLE);
                 backRightDriveMotor.setPower(-FAST_DRIVE_MULTIPLE);
                 backLeftDriveMotor.setPower(FAST_DRIVE_MULTIPLE);
@@ -171,49 +177,51 @@ public class POVmode extends LinearOpMode {
             double armExtend = gamepad2.left_stick_y;
 
             if ((armRotate > 0) && (armLimitTouchBack.getState() == true)) {                                // right stick y to rotate arm up
-                    armRotateMotor.setPower(1);
-            }
-
-            else if ((armRotate < 0) && (armLimitTouchFront.getState() == true)) {                           // right stick y to rotate arm down
-                    armRotateMotor.setPower(-1);//eesha(-1)
+                armRotateMotor.setPower(1);
+            } else if ((armRotate < 0) && (armLimitTouchFront.getState() == true)) {                           // right stick y to rotate arm down
+                armRotateMotor.setPower(-1);
             }
 
             if (armExtend > 0) {                                // left stick y to extend arm
-                armExtendMotor.setPower(armExtend * ARM_EXTEND_MULTIPLE);
-            }
-            else if (armExtend < 0) {                           // left stick y to collapse arm
-                armExtendMotor.setPower(armExtend * ARM_EXTEND_MULTIPLE);
+                armExtendMotor.setPower(-armExtend);
+            } else if (armExtend < 0) {                           // left stick y to collapse arm
+                armExtendMotor.setPower(-armExtend);
             }
             else {
-                armExtendMotor.setPower(0.2);
-            // set power to the motor to keep it extended
-                /*int armExtendPosition = armExtendMotor.getCurrentPosition();
+                // set power to the motor to keep it extended
+                armExtendPosition = armExtendMotor.getCurrentPosition();
                 armExtendMotor.setTargetPosition(armExtendPosition);
-                armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);*/
+                armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            }
+
+            if(gamepad2.dpad_up){
+                foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
+            }
+            if (gamepad2.dpad_down) {
+                foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
             }
             if (gamepad2.right_bumper) {                        // right bumper to turn wrist right 90 degrees
-                clawWrist.setPosition(WRIST_TURN_HORIZONTAL);
+                clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
             }
             if (gamepad2.left_bumper) {                         // left bumper to turn wrist left 90 degrees
-                clawWrist.setPosition(WRIST_TURN_VERTICAL);
+                clawWristServo.setPosition(WRIST_TURN_VERTICAL);
             }
             if (gamepad2.left_trigger > 0) {                    // left trigger turn wrist left
-                clawWrist.setPosition(clawWrist.getPosition() + (gamepad2.left_trigger * WRIST_TURN_MULTIPLE));
+                clawWristServo.setPosition(clawWristServo.getPosition() + (gamepad2.left_trigger * WRIST_TURN_MULTIPLE));
             }
             if (gamepad2.right_trigger > 0) {                   // right trigger turn wrist right
-                clawWrist.setPosition(clawWrist.getPosition() - (gamepad2.right_trigger * WRIST_TURN_MULTIPLE));
+                clawWristServo.setPosition(clawWristServo.getPosition() - (gamepad2.right_trigger * WRIST_TURN_MULTIPLE));
             }
             if (gamepad2.y) {                                   // y button on gamepad2 to close claw
-                clawFingers.setPosition(FINGERS_CLOSED);
+                clawFingersServo.setPosition(FINGERS_CLOSED);
             }
             if (gamepad2.a) {                                   // a button on gamepad2 to open claw
-                clawFingers.setPosition(FINGERS_OPEN) ;
+                clawFingersServo.setPosition(FINGERS_OPEN);
             }
            /* if((armRotate == 0) && (armExtend == 0) && (clawFingers.getPosition() == FINGERS_OPEN) && (!gamepad2.left_bumper) && (gamepad2.right_trigger == 0) && (gamepad2.left_trigger == 0)){
                 clawWrist.setPosition(WRIST_TURN_HORIZONTAL);
                 setting position to always be horizontal unless something is pressed or fingers are closed
             }*/
-
 
 
             // reset power to all motors
@@ -224,26 +232,24 @@ public class POVmode extends LinearOpMode {
             armRotateMotor.setPower(0.0);
 
             // telemetry only below here ...
-            telemetry.addData("drive: ", drive);
-            telemetry.addData("side: ", side);
-            telemetry.addData("multiple: ", multiple);
             telemetry.addData("Arm touch front: ", armLimitTouchFront.getState());
             telemetry.addData("Arm touch Back: ", armLimitTouchBack.getState());
-            telemetry.addData("armRotate: ", armRotate);
-            telemetry.addData("armExtend: ", armExtend);
+            telemetry.addData("Arm extend position", armExtendMotor.getCurrentPosition());
 
-            String frontLeftDriveMotorValue = frontLeftDriveMotor.getCurrentPosition() + ", " + frontLeftDriveMotor.getDirection() + ", " + frontLeftDriveMotor.getPower();
-            telemetry.addData("frontLeftDriveMotor: ", frontLeftDriveMotorValue);
-            String frontRightDriveMotorValue = frontRightDriveMotor.getCurrentPosition() + ", " + frontRightDriveMotor.getDirection() + ", " + frontRightDriveMotor.getPower();
-            telemetry.addData("frontRightDriveMotor: ", frontRightDriveMotorValue);
-            String backLeftDriveMotorValue = backLeftDriveMotor.getCurrentPosition() + ", " + backLeftDriveMotor.getDirection() + ", " + backLeftDriveMotor.getPower();
-            telemetry.addData("backLeftDriveMotor: ", backLeftDriveMotorValue);
-            String backRightDriveMotorValue = frontRightDriveMotor.getCurrentPosition() + ", " + frontRightDriveMotor.getDirection() + ", " + frontRightDriveMotor.getPower();
-            telemetry.addData("backRightDriveMotor: ", backRightDriveMotorValue);
+//            String frontLeftDriveMotorValue = frontLeftDriveMotor.getCurrentPosition() + ", " + frontLeftDriveMotor.getDirection() + ", " + frontLeftDriveMotor.getPower();
+//            telemetry.addData("frontLeftDriveMotor: ", frontLeftDriveMotorValue);
+//            String frontRightDriveMotorValue = frontRightDriveMotor.getCurrentPosition() + ", " + frontRightDriveMotor.getDirection() + ", " + frontRightDriveMotor.getPower();
+//            telemetry.addData("frontRightDriveMotor: ", frontRightDriveMotorValue);
+//            String backLeftDriveMotorValue = backLeftDriveMotor.getCurrentPosition() + ", " + backLeftDriveMotor.getDirection() + ", " + backLeftDriveMotor.getPower();
+//            telemetry.addData("backLeftDriveMotor: ", backLeftDriveMotorValue);
+//            String backRightDriveMotorValue = frontRightDriveMotor.getCurrentPosition() + ", " + frontRightDriveMotor.getDirection() + ", " + frontRightDriveMotor.getPower();
+//            telemetry.addData("backRightDriveMotor: ", backRightDriveMotorValue);
             String armExtendMotorValue = armExtendMotor.getCurrentPosition() + ", " + armExtendMotor.getDirection() + ", " + armExtendMotor.getPower();
             telemetry.addData("armExtendMotor: ", armExtendMotorValue);
             String armRotateMotorValue = armRotateMotor.getCurrentPosition() + ", " + armRotateMotor.getDirection() + ", " + armRotateMotor.getPower();
             telemetry.addData("armRotateMotor: ", armRotateMotorValue);
+            String foundationGrabberServoValue = Double.toString(foundationGrabberServo.getPosition());
+            telemetry.addData("foundationGrabberServo: ", foundationGrabberServoValue);
 
             telemetry.update();
         }
