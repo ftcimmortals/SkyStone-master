@@ -102,48 +102,48 @@ public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
      * Once you've obtained a license key, copy the string from the Vuforia web site
      * and paste it in to your code on the next line, between the double quotes.
      */
-    private static final String VUFORIA_KEY =
-            " --- YOUR NEW VUFORIA KEY GOES HERE  --- ";
+        private static final String VUFORIA_KEY =
+                "AQGs+8X/////AAABmUlgVbItAkXMhUiMsKHBxsOOsOSky4xQM7QN/1ugM+DkgNZQYexbfsQkK4+aDQexx9sWXZr+TPwDLQ8aXvJ3cru61Y/17wBrCRs2hGeLOENx0hRyY+sTnH2PJSXN+qaKSggoE67PpO33KHKdUD48x9T/dzeg9Rtg2PVEQBezKKa1SMq5AJGXTLI2YnjsXPJ/Uk+9TNcXfaCqxWAgFXaT9bLsyaXRLdaudyEq+qG6d73EOsV9RI2LY/RJGFPhL34Cs8WoRLtuXl8uo/mfvaLsaZrj0w6mxF+9hiYPEXrKwCXuFxc0pSXomDaWTE+NyetotMlsYNRJOccVhtUerhZ13nXfxUk7mECSNod/YBYiVrSp";
 
-    // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
-    // We will define some constants and conversions here
-    private static final float mmPerInch        = 25.4f;
-    private static final float mmTargetHeight   = (6) * mmPerInch;          // the height of the center of the target image above the floor
+        // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
+        // We will define some constants and conversions here
+        private static final float mmPerInch        = 25.4f;
+        private static final float mmTargetHeight   = (6) * mmPerInch;          // the height of the center of the target image above the floor
 
-    // Constant for Stone Target
-    private static final float stoneZ = 2.00f * mmPerInch;
+        // Constant for Stone Target
+        private static final float stoneZ = 2.00f * mmPerInch;
 
-    // Constants for the center support targets
-    private static final float bridgeZ = 6.42f * mmPerInch;
-    private static final float bridgeY = 23 * mmPerInch;
-    private static final float bridgeX = 5.18f * mmPerInch;
-    private static final float bridgeRotY = 59;                                 // Units are degrees
-    private static final float bridgeRotZ = 180;
+        // Constants for the center support targets
+        private static final float bridgeZ = 6.42f * mmPerInch;
+        private static final float bridgeY = 23 * mmPerInch;
+        private static final float bridgeX = 5.18f * mmPerInch;
+        private static final float bridgeRotY = 59;                                 // Units are degrees
+        private static final float bridgeRotZ = 180;
 
-    // Constants for perimeter targets
-    private static final float halfField = 72 * mmPerInch;
-    private static final float quadField  = 36 * mmPerInch;
+        // Constants for perimeter targets
+        private static final float halfField = 72 * mmPerInch;
+        private static final float quadField  = 36 * mmPerInch;
 
-    // Class Members
-    private OpenGLMatrix lastLocation = null;
-    private VuforiaLocalizer vuforia = null;
+        // Class Members
+        private OpenGLMatrix lastLocation = null;
+        private VuforiaLocalizer vuforia = null;
 
-    /**
-     * This is the webcam we are to use. As with other hardware devices such as motors and
-     * servos, this device is identified using the robot configuration tool in the FTC application.
-     */
-    WebcamName webcamName = null;
+        /**
+         * This is the webcam we are to use. As with other hardware devices such as motors and
+         * servos, this device is identified using the robot configuration tool in the FTC application.
+         */
+        WebcamName webcamName = null;
 
-    private boolean targetVisible = false;
-    private float phoneXRotate    = 0;
-    private float phoneYRotate    = 0;
-    private float phoneZRotate    = 0;
+        private boolean targetVisible = false;
+        private float phoneXRotate    = 0;
+        private float phoneYRotate    = 0;
+        private float phoneZRotate    = 0;
 
-    @Override public void runOpMode() {
-        /*
+        @Override public void runOpMode() {
+            /*
          * Retrieve the camera we are to use.
          */
-        webcamName = hardwareMap.get(WebcamName.class, "Webcam 1");
+        webcamName = hardwareMap.get(WebcamName.class, "Webcam1");
 
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
@@ -333,7 +333,8 @@ public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
 
             // check all the trackable targets to see which one (if any) is visible.
             targetVisible = false;
-            for (VuforiaTrackable trackable : allTrackables) {
+            VuforiaTrackable trackable = allTrackables.get(0);
+//            for (VuforiaTrackable trackable : allTrackables) {
                 if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
                     telemetry.addData("Visible Target", trackable.getName());
                     targetVisible = true;
@@ -344,9 +345,9 @@ public class ConceptVuforiaSkyStoneNavigationWebcam extends LinearOpMode {
                     if (robotLocationTransform != null) {
                         lastLocation = robotLocationTransform;
                     }
-                    break;
+                  //  break;
                 }
-            }
+  //          }
 
             // Provide feedback as to where the robot is located (if we know).
             if (targetVisible) {
