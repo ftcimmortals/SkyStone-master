@@ -53,14 +53,19 @@ public class POVmode extends LinearOpMode {
     final private double SLOW_DRIVE_MULTIPLE = 0.5;
     final private double WRIST_TURN_MULTIPLE = 0.005;       // multiple for wrist turn fine tuning
     final private double ARM_EXTEND_MULTIPLE = 0.5;         // multiple for arm extend
+
     final private double WRIST_TURN_HORIZONTAL = 0.5;       // wrist turn for horizontal block
     final private double WRIST_TURN_VERTICAL = 0.0;         // wrist turn for vertical block
+
     final private double FINGERS_OPEN = 0.05;               // open claw
     final private double FINGERS_CLOSED = 0.5;              // closed claw
+
     final private double FOUNDATION_GRABBER_DOWN = 0.40;    // grabber down
     final private double FOUNDATION_GRABBER_UP = 1;      // grabber up
+
     final private double STONE_PICKER_CLOSED = 1;
     final private double STONE_PICKER_OPEN = 0;
+
     final private double CAPSTONE_DROPPED = 1;
     final private double CAPSTONE_NOT_DROPPED = 0;
 
@@ -139,7 +144,6 @@ public class POVmode extends LinearOpMode {
             double turn = gamepad1.right_stick_x;
             double mY = gamepad1.left_stick_y;
             double mX = gamepad1.left_stick_x;
-
 
             double powerflD = (mY * -FAST_DRIVE_MULTIPLE);
             double powerfrD = (mY * -FAST_DRIVE_MULTIPLE);
