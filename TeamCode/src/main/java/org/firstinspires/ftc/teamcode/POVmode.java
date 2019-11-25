@@ -69,6 +69,12 @@ public class POVmode extends LinearOpMode {
     final private double CAPSTONE_DROPPED = 1;
     final private double CAPSTONE_NOT_DROPPED = 0;
 
+    final private int TICS_PER_BLOCK = 1500;
+    final private int ARM_LENGTH = 13;      // inches
+    final private float SPINDLE_DIAMETER = 1.8f;
+    final private double SPINDLE_CIRCUMFERENCE = SPINDLE_DIAMETER * Math.PI;
+    final private double TICS_PER_ROTATION = 1425.2;
+
     private ElapsedTime runtime = new ElapsedTime();
 
     // Motors
@@ -85,6 +91,11 @@ public class POVmode extends LinearOpMode {
     private DigitalChannel armLimitTouchFront = null;
     private DigitalChannel armLimitTouchBack = null;
     private Servo capstoneServo = null;
+    boolean currentState = false;
+    boolean lastState = false;
+
+    int currentPosition = 0;
+    int targetPosition = 0;
 
     @Override
     public void runOpMode() {
@@ -127,7 +138,13 @@ public class POVmode extends LinearOpMode {
 
         int armExtendPosition;
         armExtendMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder at init
+        armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        int extendMotorStartPos = armExtendMotor.getCurrentPosition();
+        int rotateMotorStartPos = armRotateMotor.getCurrentPosition();
 
+        int tester = 0;
+
+        boolean runProgram = false;
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -184,29 +201,136 @@ public class POVmode extends LinearOpMode {
                 stoneServo.setPosition(STONE_PICKER_CLOSED);
             }
 
-            //DRIVER 2 : Gamepad 2 controls
+            /*
+                temporary code to automate arm
+             */
 
-            double armRotate = gamepad2.right_stick_y;          //Set multiples for rotating and extending the arm
-            double armExtend = gamepad2.left_stick_y;
+            // tics = (17.87/360)/1452.2
+            // 1452.2 - https://www.gobilda.com/5202-series-yellow-jacket-planetary-gear-motor-50-9-1-ratio-117-rpm-3-3-5v-encoder/
+            // sin theta = P/H, P = 4inches, H = 13 inches = .307, inverse sin .307 = 17.87 https://www.mathsisfun.com/scientific-calculator.html
+            // ABOVE MIGHT BE WRONG
+            // assuming 15 degrees movement per rotation ~15 degrees. 360/24
 
-            if ((armRotate > 0) && (armLimitTouchBack.getState() == true)) {                                // right stick y to rotate arm up
-                armRotateMotor.setPower(1);
-            } else if ((armRotate < 0) && (armLimitTouchFront.getState() == true)) {                           // right stick y to rotate arm down
-                armRotateMotor.setPower(-1);
+            currentState = gamepad1.a;
+            if ((currentState == false) && (lastState == true)){
+                targetPosition++;
             }
-
-            if (armExtend > 0) {                                // left stick y to extend arm
-                armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                armExtendMotor.setPower(-armExtend*ARM_EXTEND_MULTIPLE);
-            } else if (armExtend < 0) {                           // left stick y to collapse arm
-                armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                armExtendMotor.setPower(-armExtend*ARM_EXTEND_MULTIPLE);
+            if(gamepad1.x){
+                targetPosition = 0;
             }
-            else {
-                // set power to the motor to keep it extended
-                armExtendPosition = armExtendMotor.getCurrentPosition();
-                armExtendMotor.setTargetPosition(armExtendPosition);
-                armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            if (gamepad1.b) {
+                runProgram = true;
+            }
+            if (runProgram) {
+                if (armLimitTouchFront.getState() == false) {
+                    armRotateMotor.setTargetPosition(armRotateMotor.getCurrentPosition());
+                    armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    armRotateMotor.setPower(1.0);
+                }
+
+                //calculating current position
+
+                currentPosition = (int)(armRotateMotor.getCurrentPosition() / TICS_PER_BLOCK);
+                if (currentPosition < targetPosition) {
+                    if ((armRotateMotor.getCurrentPosition()) <= ((targetPosition * TICS_PER_BLOCK) - 50)) {
+                        // move arm up/down because arm is already contracted
+                        if (armExtendMotor.getCurrentPosition() <= (extendMotorStartPos + 50)) {
+                            // arm is contracted, move arm
+                            armRotateMotor.setTargetPosition(TICS_PER_BLOCK * targetPosition);
+                            armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                            armRotateMotor.setPower(1.0);
+                            tester = 1;
+                        } else {
+                            // contract arm before moving arm
+                            armExtendMotor.setTargetPosition(extendMotorStartPos);
+                            armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                            armExtendMotor.setPower(0.3);
+                            tester = 2;
+                        }
+                    } else {
+                        // extend arm
+                        double bSquared = Math.pow(ARM_LENGTH, 2);
+                        double x = Math.pow(4 + (4 * targetPosition), 2);
+                        double newH = Math.sqrt(bSquared + x);
+                        double deltaH = newH - ARM_LENGTH;
+                        double rotationsOfArmExtension = deltaH / SPINDLE_CIRCUMFERENCE;
+                        int armExPos = 0;
+
+                        armExPos = (int) (rotationsOfArmExtension * TICS_PER_ROTATION);
+                        armExtendMotor.setTargetPosition(armExPos);
+                        armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        armExtendMotor.setPower(0.3);
+                        tester = 3;
+
+                        if (armExtendMotor.getCurrentPosition() >= Math.abs(armExPos) - 50) {
+                            runProgram = false;
+                        }
+                    }
+                }else{
+                    if ((armRotateMotor.getCurrentPosition()) >= ((targetPosition * TICS_PER_BLOCK) + 50)) {
+                        // move arm up/down because arm is already contracted
+                        if (armExtendMotor.getCurrentPosition() <= (extendMotorStartPos + 50)) {
+                            // arm is contracted, move arm
+                            armRotateMotor.setTargetPosition(TICS_PER_BLOCK * targetPosition);
+                            armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                            armRotateMotor.setPower(1.0);
+                            tester = 4;
+                        } else {
+                            // contract arm before moving arm
+                            armExtendMotor.setTargetPosition(extendMotorStartPos);
+                            armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                            armExtendMotor.setPower(0.3);
+                            tester = 5;
+                        }
+                    }else{
+                        // extend arm
+                        double bSquared = Math.pow(ARM_LENGTH, 2);
+                        double x = Math.pow(4 + (4 * targetPosition), 2);
+                        double newH = Math.sqrt(bSquared + x);
+                        double deltaH = newH - ARM_LENGTH;
+                        double rotationsOfArmExtension = deltaH / SPINDLE_CIRCUMFERENCE;
+                        int armExPos = 0;
+
+                        armExPos = (int) (rotationsOfArmExtension * TICS_PER_ROTATION);
+                        armExtendMotor.setTargetPosition(armExPos);
+                        armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        armExtendMotor.setPower(0.3);
+                        tester = 6;
+
+                        if (armExtendMotor.getCurrentPosition() <= Math.abs(armExPos) + 50) {
+                            runProgram = false;
+                        }
+                    }
+                }
+            }else{
+                //DRIVER 2 : Gamepad 2 controls
+
+                double armRotate = gamepad2.right_stick_y;          //Set multiples for rotating and extending the arm
+                double armExtend = gamepad2.left_stick_y;
+
+                if ((armRotate > 0) && (armLimitTouchBack.getState() == true)) {                                // right stick y to rotate arm up
+                    armRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    armRotateMotor.setPower(1);
+                } else if ((armRotate < 0) && (armLimitTouchFront.getState() == true)) {                           // right stick y to rotate arm down
+                    armRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    armRotateMotor.setPower(-1);
+                }
+                else{
+                    armRotateMotor.setPower(0.0);
+                }
+
+                if (armExtend > 0) {                                // left stick y to extend arm
+                    armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    armExtendMotor.setPower(-armExtend * ARM_EXTEND_MULTIPLE);
+                } else if (armExtend < 0) {                           // left stick y to collapse arm
+                    armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    armExtendMotor.setPower(-armExtend * ARM_EXTEND_MULTIPLE);
+                } else {
+                    // set power to the motor to keep it extended
+                    armExtendPosition = armExtendMotor.getCurrentPosition();
+                    armExtendMotor.setTargetPosition(armExtendPosition);
+                    armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                }
             }
 
             if(gamepad2.dpad_up){
@@ -250,7 +374,7 @@ public class POVmode extends LinearOpMode {
             frontRightDriveMotor.setPower(0.0);
             backLeftDriveMotor.setPower(0.0);
             backRightDriveMotor.setPower(0.0);
-            armRotateMotor.setPower(0.0);
+
 
             // telemetry only below here ...
             telemetry.addData("Arm touch front: ", armLimitTouchFront.getState());
@@ -269,13 +393,17 @@ public class POVmode extends LinearOpMode {
 //            telemetry.addData("backRightDriveMotor: ", backRightDriveMotorValue);
             String armExtendMotorValue = armExtendMotor.getCurrentPosition() + ", " + armExtendMotor.getMode() + ", " + armExtendMotor.getDirection() + ", " + armExtendMotor.getPower();
             telemetry.addData("armExtendMotor: ", armExtendMotorValue);
-            String armRotateMotorValue = armRotateMotor.getCurrentPosition() + ", " + armRotateMotor.getDirection() + ", " + armRotateMotor.getPower();
+            String armRotateMotorValue = armRotateMotor.getCurrentPosition() + ", " + armExtendMotor.getMode() + ", " + armRotateMotor.getDirection() + ", " + armRotateMotor.getPower();
             telemetry.addData("armRotateMotor: ", armRotateMotorValue);
-            String foundationGrabberServoValue = Double.toString(foundationGrabberServo.getPosition());
-            telemetry.addData("foundationGrabberServo: ", foundationGrabberServoValue);
-            telemetry.addData("Battery", this.hardwareMap.voltageSensor.iterator().next().getVoltage());
+          //  String foundationGrabberServoValue = Double.toString(foundationGrabberServo.getPosition());
+          //  telemetry.addData("foundationGrabberServo: ", foundationGrabberServoValue);
+          //  telemetry.addData("Battery", this.hardwareMap.voltageSensor.iterator().next().getVoltage());
+            telemetry.addData("Target Position: ", targetPosition);
+            telemetry.addData("Current: ", currentPosition);
+            telemetry.addData("Tester: ", tester);
 
             telemetry.update();
+            lastState = currentState;
         }
     }
 }

@@ -56,12 +56,15 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
-    public void runOpMode (){
+    public void runOpMode () {
+
         // game controller #1
         frontLeftDriveMotor = hardwareMap.get(DcMotor.class, "front_left_drive");
         frontRightDriveMotor = hardwareMap.get(DcMotor.class, "front_right_drive");
         backLeftDriveMotor = hardwareMap.get(DcMotor.class, "back_left_drive");
         backRightDriveMotor = hardwareMap.get(DcMotor.class, "back_right_drive");
+
+        CommonMethods commonMethods = new CommonMethods(frontLeftDriveMotor, frontRightDriveMotor, backLeftDriveMotor, backRightDriveMotor);
 
         // game controller #2
         armRotateMotor = hardwareMap.get(DcMotor.class, "arm_rotate_motor");
@@ -91,133 +94,28 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
 
         double voltage = this.hardwareMap.voltageSensor.iterator().next().getVoltage();
         double timeMultiple = (-0.1*voltage) + 2.25;
-        moveForwardTime(0.5, false, 0.7*timeMultiple);
-        moveSideTime(0.5, false, 3*timeMultiple);
-        moveStop();
+        commonMethods.moveForwardTime(0.5, false, 0.7*timeMultiple);
+        commonMethods.moveSideTime(0.5, false, 3*timeMultiple);
+        commonMethods.moveStop();
         sleep(500);
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
         sleep(500);
-        moveSideTime(0.5, true, 1*timeMultiple);
-        moveSideTime(1, true, 2.2);
+        commonMethods.moveSideTime(0.5, true, 1*timeMultiple);
+        commonMethods.moveSideTime(1, true, 2.2);
         sleep(500);
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
-        moveForwardTime(0.5, true, 2*timeMultiple);
-        moveSideTime(0.5, false, 0.5*timeMultiple);
-        moveForwardTime(0.5, false, 1.25*timeMultiple);
-        moveStop();
+        commonMethods.moveForwardTime(0.5, true, 2*timeMultiple);
+        commonMethods.moveSideTime(0.5, false, 0.5*timeMultiple);
+        commonMethods.moveForwardTime(0.5, false, 1.25*timeMultiple);
+        commonMethods.moveStop();
         double timeStart = getRuntime();
         while((armLimitTouchFront.getState() == true)&& (getRuntime() < timeStart + (4*timeMultiple) && opModeIsActive())){
             armRotateMotor.setPower(-1);
         }
         armRotateMotor.setPower(0.0);
-        moveForwardTime(0.5, true, 0.5*timeMultiple);
-        moveSideTime(0.5, true, 0.4*timeMultiple);
-        moveForwardTime(0.5, true, 1.2*timeMultiple);
+        commonMethods.moveForwardTime(0.5, true, 0.5*timeMultiple);
+        commonMethods.moveSideTime(0.5, true, 0.4*timeMultiple);
+        commonMethods.moveForwardTime(0.5, true, 1.2*timeMultiple);
     }
 
-    public double moveForwardTime(double wheelPower, boolean direction, double movetime) {
-        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // direction true => forward
-        // direction false => backward
-        double timeNow = getRuntime();
-        // use a factor for left wheel because the robot gets pulled to the left due to weight balance
-        frontRightDriveMotor.setPower(0);
-        frontLeftDriveMotor.setPower(0);
-        backRightDriveMotor.setPower(0);
-        backLeftDriveMotor.setPower(0);
-
-        if (direction) {
-            timeNow = getRuntime();
-            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
-
-                frontLeftDriveMotor.setPower(wheelPower);
-                frontRightDriveMotor.setPower(wheelPower);
-                backLeftDriveMotor.setPower(wheelPower);
-                backRightDriveMotor.setPower(wheelPower);
-            }
-
-            frontLeftDriveMotor.setPower(0);
-            frontRightDriveMotor.setPower(0);
-            backLeftDriveMotor.setPower(0);
-            backRightDriveMotor.setPower(0);
-        } else {
-            timeNow = getRuntime();
-            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
-
-                frontLeftDriveMotor.setPower(-wheelPower);
-                frontRightDriveMotor.setPower(-wheelPower);
-                backLeftDriveMotor.setPower(-wheelPower);
-                backRightDriveMotor.setPower(-wheelPower);
-            }
-
-            frontLeftDriveMotor.setPower(0);
-            frontRightDriveMotor.setPower(0);
-            backLeftDriveMotor.setPower(0);
-            backRightDriveMotor.setPower(0);
-        }
-        return (0);
-    }
-    public double moveSideTime(double wheelPower, boolean direction, double movetime) {
-        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // direction true => right
-        // direction false => left
-        double timeNow = getRuntime();
-        // use a factor for left wheel because the robot gets pulled to the left due to weight balance
-        frontRightDriveMotor.setPower(0);
-        frontLeftDriveMotor.setPower(0);
-        backRightDriveMotor.setPower(0);
-        backLeftDriveMotor.setPower(0);
-
-        if (direction) {
-            timeNow = getRuntime();
-            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
-
-                frontLeftDriveMotor.setPower(wheelPower);
-                frontRightDriveMotor.setPower(-wheelPower);
-                backLeftDriveMotor.setPower(-wheelPower);
-                backRightDriveMotor.setPower(wheelPower);
-            }
-
-            frontLeftDriveMotor.setPower(0);
-            frontRightDriveMotor.setPower(0);
-            backLeftDriveMotor.setPower(0);
-            backRightDriveMotor.setPower(0);
-        } else {
-            timeNow = getRuntime();
-            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
-
-                frontLeftDriveMotor.setPower(-wheelPower);
-                frontRightDriveMotor.setPower(wheelPower);
-                backLeftDriveMotor.setPower(wheelPower);
-                backRightDriveMotor.setPower(-wheelPower);
-            }
-
-            frontLeftDriveMotor.setPower(0);
-            frontRightDriveMotor.setPower(0);
-            backLeftDriveMotor.setPower(0);
-            backRightDriveMotor.setPower(0);
-        }
-        return (0);
-    }
-    public double moveStop(){
-        frontLeftDriveMotor.setPower(0);
-        frontRightDriveMotor.setPower(0);
-        backLeftDriveMotor.setPower(0);
-        backRightDriveMotor.setPower(0);
-
-        return (0);
-    }
-    public double absolute(double inputval) {
-        if (inputval > 0) {
-            return inputval;
-        } else {
-            return -1 * inputval;
-        }
-    }
 }
