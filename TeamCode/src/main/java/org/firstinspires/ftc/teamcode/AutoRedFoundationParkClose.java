@@ -39,8 +39,8 @@ public class AutoRedFoundationParkClose extends LinearOpMode {
     final private double FOUNDATION_GRABBER_UP = 1;      // grabber up
     final private double FINGERS_OPEN = 0.05;               // open claw
     final private double FINGERS_CLOSED = 0.5;              //close claw
-    final private double CAPSTONE_DROPPED = 1;
-    final private double CAPSTONE_NOT_DROPPED = 0;
+    final private double CAPSTONE_NOT_DROPPED = 1;
+    final private double CAPSTONE_DROPPED = 0;
     private DcMotor frontLeftDriveMotor = null;
     private DcMotor frontRightDriveMotor = null;
     private DcMotor backLeftDriveMotor = null;
@@ -96,7 +96,7 @@ public class AutoRedFoundationParkClose extends LinearOpMode {
         moveStop();
         sleep(500);
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
-        sleep(500);
+        sleep(1000);
         moveSideTime(0.5, true, 1*timeMultiple);
         moveSideTime(1, true, 2.2);
         sleep(500);
@@ -117,7 +117,7 @@ public class AutoRedFoundationParkClose extends LinearOpMode {
         armRotateMotor.setTargetPosition(ticsPerDegree * degrees);
         armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armRotateMotor.setPower(1);
-        sleep(4000);
+        sleep(5000);
         armRotateMotor.setPower(0);
         moveSideTime(0.5, true, 0.4*timeMultiple);
         moveForwardTime(0.5, false, 1.4*timeMultiple);

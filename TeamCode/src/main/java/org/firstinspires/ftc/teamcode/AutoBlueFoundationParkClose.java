@@ -99,7 +99,7 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
         moveStop();
         sleep(500);
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
-        sleep(500);
+        sleep(1000);
         moveSideTime(0.5, true, 1*timeMultiple);
         moveSideTime(1, true, 2.2);
         sleep(500);
