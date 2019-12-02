@@ -45,6 +45,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -161,8 +162,8 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     final private double STONE_PICKER_CLOSED = 1;
     final private double STONE_PICKER_OPEN = 0;
-    final private double CAPSTONE_DROPPED = 1;
-    final private double CAPSTONE_NOT_DROPPED = 0;
+    final private double CAPSTONE_NOT_DROPPED = 1;
+    final private double CAPSTONE_DROPPED = 0;
 
 
     @Override public void runOpMode() {
@@ -197,6 +198,8 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
+
+        capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
 
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
@@ -296,7 +299,6 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
         }
         clawFingersServo.setPosition(FINGERS_OPEN);
-        capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
 
         // WARNING:
         // In this sample, we do not wait for PLAY to be pressed.  Target Tracking is started immediately when INIT is pressed.
@@ -317,18 +319,22 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             double timeMultiple = (-0.1*voltage) + 2.25;
 
             // check all the trackable targets to see which one (if any) is visible.
+            moveForwardTime(0.5, false, 1*timeMultiple);
                 targetVisible = false;
-                moveForwardTime(.50, false, 1*timeMultiple);
 
-                double timeStart = getRuntime();
-                while((armLimitTouchFront.getState() == true)&& (getRuntime() < timeStart + (4*timeMultiple) && opModeIsActive())){
-                armRotateMotor.setPower(-1);
-                }
-                armRotateMotor.setPower(0);
+            int ticsPerDegree = (int) ((1425.2 *24)/360);
+            int degrees = 132;
+
+            armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            armRotateMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+            armRotateMotor.setTargetPosition(ticsPerDegree * degrees);
+            armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armRotateMotor.setPower(1);
+
 
                 for(int ii=0; ii<2; ii++) {
                     VuforiaTrackable trackable = allTrackables.get(0);
-                        sleep(1000);
+                        sleep(500);
                         if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
                             telemetry.addData("Visible Target", trackable.getName());
                             targetVisible = true;
@@ -344,6 +350,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
 
                 // Provide feedback as to where the robot is located (if we know).
                 if (targetVisible) {
+                    //First stone
                     // express position (translation) of robot in inches.
                     VectorF translation = lastLocation.getTranslation();
                     telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
@@ -354,23 +361,38 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                     double Ypos = translation.get(1)/mmPerInch;
                     telemetry.addData("Ypos: ",absolute(Ypos));
                     telemetry.update();
-                    moveForwardTime(0.50, false, 1*timeMultiple);
+                    moveForwardTime(0.75, false, 0.75*timeMultiple);
                     sleep(500);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
                     sleep(500);
-                    moveForwardTime(0.5, true, 0.5*timeMultiple);
+                    moveForwardTime(0.75, true, 0.35*timeMultiple);
                     turnTime(0.5, false, 1.6*timeMultiple);
-                    moveForwardTime(0.5, false, 3.6*timeMultiple);
+                    moveForwardTime(0.75, false, 2.5*timeMultiple);
                     sleep(500);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(0.5, true, 1.2*timeMultiple);
+                    moveForwardTime(0.75, true, 2.5*timeMultiple);
+                    turnTime(0.5, true, 1.65*timeMultiple);
+                    moveSideTime(0.75, false, 1.85*timeMultiple);
+                    moveForwardTime(0.75, false, 0.2*timeMultiple);
+                    sleep(500);
+                    stoneServo.setPosition(STONE_PICKER_OPEN);
+                    sleep(500);
+                    moveForwardTime(0.75, true, 0.4*timeMultiple);
+                    moveSideTime(0.75, true, 1.75*timeMultiple);
+                    turnTime(0.5, false, 1.6*timeMultiple);
+                    moveForwardTime(0.75, false, 2.5*timeMultiple);
+                    sleep(500);
+                    stoneServo.setPosition(STONE_PICKER_CLOSED);
+                    sleep(500);
+                    moveForwardTime(1, true, 0.4*timeMultiple);
                 }else{
+                    //Second stone
                     moveSideTime(0.5, false, 0.75*timeMultiple);
                     targetVisible = false;
                     for(int ii=0; ii<2; ii++) {
                         VuforiaTrackable trackable = allTrackables.get(0);
-                        sleep(1000);
+                        sleep(500);
                         if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
                             telemetry.addData("Visible Target", trackable.getName());
                             targetVisible = true;
@@ -383,30 +405,57 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                         }
                     }
                         if (targetVisible){
-                            moveForwardTime(0.5, false, 1*timeMultiple);
+                            moveForwardTime(0.75, false, 0.75*timeMultiple);
                             sleep(500);
                             stoneServo.setPosition(STONE_PICKER_OPEN);
                             sleep(500);
-                            moveForwardTime(0.5, true, 0.5*timeMultiple);
+                            moveForwardTime(0.75, true, 0.35*timeMultiple);
                             turnTime(0.5, false, 1.6*timeMultiple);
-                            moveForwardTime(0.5, false, 4*timeMultiple);
+                            moveForwardTime(0.75, false, 3.2*timeMultiple);
                             sleep(500);
                             stoneServo.setPosition(STONE_PICKER_CLOSED);
                             sleep(500);
-                            moveForwardTime(0.5, true, 1.2*timeMultiple);
+                            moveForwardTime(0.75, true, 3.2*timeMultiple);
+                            turnTime(0.5, true, 1.65*timeMultiple);
+                            moveSideTime(0.75, false, 1.85*timeMultiple);
+                            moveForwardTime(0.75, false, 0.2*timeMultiple);
+                            sleep(500);
+                            stoneServo.setPosition(STONE_PICKER_OPEN);
+                            sleep(500);
+                            moveForwardTime(0.75, true, 0.4*timeMultiple);
+                            moveSideTime(0.75, true, 1.75*timeMultiple);
+                            turnTime(0.5, false, 1.6*timeMultiple);
+                            moveForwardTime(0.75, false, 3.2*timeMultiple);
+                            sleep(500);
+                            stoneServo.setPosition(STONE_PICKER_CLOSED);
+                            sleep(500);
+                            moveForwardTime(1, true, 0.4*timeMultiple);
                         }else{
+                            //Third stone
                             moveSideTime(0.5, false, 0.75*timeMultiple);
-                            moveForwardTime(0.5, false, 1*timeMultiple);
+                            moveForwardTime(0.75, false, 0.75*timeMultiple);
                             sleep(500);
                             stoneServo.setPosition(STONE_PICKER_OPEN);
                             sleep(500);
-                            moveForwardTime(0.5, true, 0.5*timeMultiple);
+                            moveForwardTime(0.75, true, 0.35*timeMultiple);
                             turnTime(0.5, false, 1.6*timeMultiple);
-                            moveForwardTime(0.5, false, 4.4*timeMultiple);
+                            moveForwardTime(0.75, false, 3.5 *timeMultiple);
                             sleep(500);
                             stoneServo.setPosition(STONE_PICKER_CLOSED);
                             sleep(500);
-                            moveForwardTime(0.5, true, 1.2*timeMultiple);
+                            moveForwardTime(0.75, true, 2.7*timeMultiple);
+                            turnTime(0.5, true, 1.65*timeMultiple);
+                            moveForwardTime(0.75, false, 0.2*timeMultiple);
+                            sleep(500);
+                            stoneServo.setPosition(STONE_PICKER_OPEN);
+                            sleep(500);
+                            moveForwardTime(0.75, true, 0.35*timeMultiple);
+                            turnTime(0.5, false, 1.6*timeMultiple);
+                            moveForwardTime(0.75, false, 2.5*timeMultiple);
+                            sleep(500);
+                            stoneServo.setPosition(STONE_PICKER_CLOSED);
+                            sleep(500);
+                            moveForwardTime(1, true, 0.4*timeMultiple);
                         }
                 }
 

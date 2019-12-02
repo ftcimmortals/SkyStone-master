@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -107,11 +108,16 @@ public class AutoRedFoundationParkFar extends LinearOpMode {
         moveStop();
         moveForwardTime(0.5, false, 1.25*timeMultiple);
         moveSideTime(0.5, false, 1.9*timeMultiple);
-        double timeStart = getRuntime();
-        while((armLimitTouchFront.getState() == true)&& (getRuntime() < timeStart + (4*timeMultiple) && opModeIsActive())){
-            armRotateMotor.setPower(-1);
-        }
-        armRotateMotor.setPower(0.0);
+
+        int ticsPerDegree = (int) ((1425.2 *24)/360);
+        int degrees = 132;
+
+        armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armRotateMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        armRotateMotor.setTargetPosition(ticsPerDegree * degrees);
+        armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armRotateMotor.setPower(1);
+        sleep(4000);
         moveStop();
         moveForwardTime(0.5, false, 1.2*timeMultiple);
     }

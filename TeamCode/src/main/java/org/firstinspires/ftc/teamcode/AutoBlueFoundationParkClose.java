@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -36,8 +37,8 @@ import java.util.Locale;
 public class AutoBlueFoundationParkClose extends LinearOpMode {
     final private double FOUNDATION_GRABBER_DOWN = 0.40;    // grabber down
     final private double FOUNDATION_GRABBER_UP = 1;      // grabber up
-    final private double CAPSTONE_DROPPED = 1;
-    final private double CAPSTONE_NOT_DROPPED = 0;
+    final private double CAPSTONE_NOT_DROPPED = 1;
+    final private double CAPSTONE_DROPPED = 0;
     final private double FINGERS_OPEN = 0.05;               // open claw
     final private double FINGERS_CLOSED = 0.5;              //close claw
     private DcMotor frontLeftDriveMotor = null;
@@ -64,7 +65,6 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
         backLeftDriveMotor = hardwareMap.get(DcMotor.class, "back_left_drive");
         backRightDriveMotor = hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        CommonMethods commonMethods = new CommonMethods(frontLeftDriveMotor, frontRightDriveMotor, backLeftDriveMotor, backRightDriveMotor);
 
         // game controller #2
         armRotateMotor = hardwareMap.get(DcMotor.class, "arm_rotate_motor");
@@ -94,28 +94,142 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
 
         double voltage = this.hardwareMap.voltageSensor.iterator().next().getVoltage();
         double timeMultiple = (-0.1*voltage) + 2.25;
-        commonMethods.moveForwardTime(0.5, false, 0.7*timeMultiple);
-        commonMethods.moveSideTime(0.5, false, 3*timeMultiple);
-        commonMethods.moveStop();
+        moveForwardTime(0.5, false, 0.7*timeMultiple);
+        moveSideTime(0.5, false, 3*timeMultiple);
+        moveStop();
         sleep(500);
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
         sleep(500);
-        commonMethods.moveSideTime(0.5, true, 1*timeMultiple);
-        commonMethods.moveSideTime(1, true, 2.2);
+        moveSideTime(0.5, true, 1*timeMultiple);
+        moveSideTime(1, true, 2.2);
         sleep(500);
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
-        commonMethods.moveForwardTime(0.5, true, 2*timeMultiple);
-        commonMethods.moveSideTime(0.5, false, 0.5*timeMultiple);
-        commonMethods.moveForwardTime(0.5, false, 1.25*timeMultiple);
-        commonMethods.moveStop();
-        double timeStart = getRuntime();
-        while((armLimitTouchFront.getState() == true)&& (getRuntime() < timeStart + (4*timeMultiple) && opModeIsActive())){
-            armRotateMotor.setPower(-1);
-        }
-        armRotateMotor.setPower(0.0);
-        commonMethods.moveForwardTime(0.5, true, 0.5*timeMultiple);
-        commonMethods.moveSideTime(0.5, true, 0.4*timeMultiple);
-        commonMethods.moveForwardTime(0.5, true, 1.2*timeMultiple);
+        moveForwardTime(0.5, true, 2*timeMultiple);
+        moveSideTime(0.5, false, 0.5*timeMultiple);
+        moveForwardTime(0.5, false, 1.25*timeMultiple);
+        moveStop();
+        armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        int ticsPerDegree = (int) ((1425.2 *24)/360);
+        int degrees = 132;
+
+        armRotateMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        armRotateMotor.setTargetPosition(ticsPerDegree * degrees);
+        armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armRotateMotor.setPower(1);
+        sleep(4000);
+
+        moveForwardTime(0.5, true, 0.5*timeMultiple);
+        moveSideTime(0.5, true, 0.4*timeMultiple);
+        moveForwardTime(0.5, true, 1.2*timeMultiple);
     }
 
+
+    public double moveForwardTime(double wheelPower, boolean direction, double movetime) {
+        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // direction true => forward
+        // direction false => backward
+        double timeNow = getRuntime();
+        // use a factor for left wheel because the robot gets pulled to the left due to weight balance
+        frontRightDriveMotor.setPower(0);
+        frontLeftDriveMotor.setPower(0);
+        backRightDriveMotor.setPower(0);
+        backLeftDriveMotor.setPower(0);
+
+        if (direction) {
+            timeNow = getRuntime();
+            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
+
+                frontLeftDriveMotor.setPower(wheelPower);
+                frontRightDriveMotor.setPower(wheelPower);
+                backLeftDriveMotor.setPower(wheelPower);
+                backRightDriveMotor.setPower(wheelPower);
+            }
+
+            frontLeftDriveMotor.setPower(0);
+            frontRightDriveMotor.setPower(0);
+            backLeftDriveMotor.setPower(0);
+            backRightDriveMotor.setPower(0);
+        } else {
+            timeNow = getRuntime();
+            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
+
+                frontLeftDriveMotor.setPower(-wheelPower);
+                frontRightDriveMotor.setPower(-wheelPower);
+                backLeftDriveMotor.setPower(-wheelPower);
+                backRightDriveMotor.setPower(-wheelPower);
+            }
+
+            frontLeftDriveMotor.setPower(0);
+            frontRightDriveMotor.setPower(0);
+            backLeftDriveMotor.setPower(0);
+            backRightDriveMotor.setPower(0);
+        }
+        return (0);
+    }
+
+    public double moveSideTime(double wheelPower, boolean direction, double movetime) {
+        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // direction true => right
+        // direction false => left
+        double timeNow = getRuntime();
+        // use a factor for left wheel because the robot gets pulled to the left due to weight balance
+        frontRightDriveMotor.setPower(0);
+        frontLeftDriveMotor.setPower(0);
+        backRightDriveMotor.setPower(0);
+        backLeftDriveMotor.setPower(0);
+
+        if (direction) {
+            timeNow = getRuntime();
+            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
+
+                frontLeftDriveMotor.setPower(wheelPower);
+                frontRightDriveMotor.setPower(-wheelPower);
+                backLeftDriveMotor.setPower(-wheelPower);
+                backRightDriveMotor.setPower(wheelPower);
+            }
+
+            frontLeftDriveMotor.setPower(0);
+            frontRightDriveMotor.setPower(0);
+            backLeftDriveMotor.setPower(0);
+            backRightDriveMotor.setPower(0);
+        } else {
+            timeNow = getRuntime();
+            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
+
+                frontLeftDriveMotor.setPower(-wheelPower);
+                frontRightDriveMotor.setPower(wheelPower);
+                backLeftDriveMotor.setPower(wheelPower);
+                backRightDriveMotor.setPower(-wheelPower);
+            }
+
+            frontLeftDriveMotor.setPower(0);
+            frontRightDriveMotor.setPower(0);
+            backLeftDriveMotor.setPower(0);
+            backRightDriveMotor.setPower(0);
+        }
+        return (0);
+    }
+
+    public double moveStop(){
+        frontLeftDriveMotor.setPower(0);
+        frontRightDriveMotor.setPower(0);
+        backLeftDriveMotor.setPower(0);
+        backRightDriveMotor.setPower(0);
+
+        return (0);
+    }
+
+    public double absolute(double inputval) {
+        if (inputval > 0) {
+            return inputval;
+        } else {
+            return -1 * inputval;
+        }
+    }
 }

@@ -49,13 +49,12 @@ public class POVmode extends LinearOpMode {
     private BNO055IMU imu;
 
     // Constants
-    final private double FAST_DRIVE_MULTIPLE = 1.0;         // multiple for driving
     final private double SLOW_DRIVE_MULTIPLE = 0.5;
     final private double WRIST_TURN_MULTIPLE = 0.005;       // multiple for wrist turn fine tuning
     final private double ARM_EXTEND_MULTIPLE = 0.5;         // multiple for arm extend
 
-    final private double WRIST_TURN_HORIZONTAL = 0.5;       // wrist turn for horizontal block
-    final private double WRIST_TURN_VERTICAL = 0.0;         // wrist turn for vertical block
+    final private double WRIST_TURN_HORIZONTAL = 0.55;       // wrist turn for horizontal block
+    final private double WRIST_TURN_VERTICAL = 0.05;         // wrist turn for vertical block
 
     final private double FINGERS_OPEN = 0.05;               // open claw
     final private double FINGERS_CLOSED = 0.5;              // closed claw
@@ -66,14 +65,21 @@ public class POVmode extends LinearOpMode {
     final private double STONE_PICKER_CLOSED = 1;
     final private double STONE_PICKER_OPEN = 0;
 
-    final private double CAPSTONE_DROPPED = 1;
-    final private double CAPSTONE_NOT_DROPPED = 0;
+    final private double ALIGNMENT_CLOSED = 0;
+    final private double ALIGNMENT_OPEN = 0.83;
 
-    final private int TICS_PER_BLOCK = 1500;
+    final private double CAPSTONE_NOT_DROPPED = 1;
+    final private double CAPSTONE_DROPPED = 0;
+
     final private int ARM_LENGTH = 13;      // inches
-    final private float SPINDLE_DIAMETER = 1.8f;
-    final private double SPINDLE_CIRCUMFERENCE = SPINDLE_DIAMETER * Math.PI;
-    final private double TICS_PER_ROTATION = 1425.2;
+    final private int BASE_LENGTH = 13;
+    final private double SPINDLE_CIRCUMFERENCE = 5;
+    final private double TICS_PER_ROTATION_ROTATION_MOTOR = 1425.2;
+    final private double TICS_PER_ROTATION_EXTENTION_MOTOR = 537.6;
+    final private double TICS_PER_DEGREE = (TICS_PER_ROTATION_ROTATION_MOTOR * 24) / 360;
+    final private int TICS_PER_WHEEL_ROTATION = 1440;
+
+
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -90,12 +96,23 @@ public class POVmode extends LinearOpMode {
     private Servo foundationGrabberServo = null;
     private DigitalChannel armLimitTouchFront = null;
     private DigitalChannel armLimitTouchBack = null;
+    private Servo alignmentServo = null;
     private Servo capstoneServo = null;
+
+
+
     boolean currentState = false;
     boolean lastState = false;
+    boolean run = false;
 
     int currentPosition = 0;
     int targetPosition = 0;
+    double numberToClear;
+    double driveMultiple;
+
+    float theta = 0.0f;
+
+
 
     @Override
     public void runOpMode() {
@@ -120,7 +137,10 @@ public class POVmode extends LinearOpMode {
 
         armLimitTouchFront = hardwareMap.get(DigitalChannel.class, "arm_limit_touch_front");
         armLimitTouchBack = hardwareMap.get(DigitalChannel.class, "arm_limit_touch_back");
+        alignmentServo = hardwareMap.get(Servo.class, "alignment_servo");
         capstoneServo = hardwareMap.get(Servo.class, "capstone_servo");
+
+
         armLimitTouchFront.setMode(DigitalChannel.Mode.INPUT);
         armLimitTouchBack.setMode(DigitalChannel.Mode.INPUT);
 
@@ -134,6 +154,7 @@ public class POVmode extends LinearOpMode {
 
         clawFingersServo.setPosition(FINGERS_OPEN);                   //set fingers position at init
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);      //set grabber position at init
+        alignmentServo.setPosition(ALIGNMENT_CLOSED);
         capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
 
         int armExtendPosition;
@@ -141,6 +162,10 @@ public class POVmode extends LinearOpMode {
         armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         int extendMotorStartPos = armExtendMotor.getCurrentPosition();
         int rotateMotorStartPos = armRotateMotor.getCurrentPosition();
+       /* frontLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
 
         int tester = 0;
 
@@ -162,15 +187,22 @@ public class POVmode extends LinearOpMode {
             double mY = gamepad1.left_stick_y;
             double mX = gamepad1.left_stick_x;
 
-            double powerflD = (mY * -FAST_DRIVE_MULTIPLE);
-            double powerfrD = (mY * -FAST_DRIVE_MULTIPLE);
-            double powerblD = (mY * -FAST_DRIVE_MULTIPLE);
-            double powerbrD = (mY * -FAST_DRIVE_MULTIPLE);
+            if(gamepad1.left_trigger > 0){
+                driveMultiple = 0.5;
+            }
+            else{
+                driveMultiple = 1;
+            }
 
-            double powerflS = (mX * FAST_DRIVE_MULTIPLE);
-            double powerfrS = (mX * -FAST_DRIVE_MULTIPLE);
-            double powerblS = (mX * -FAST_DRIVE_MULTIPLE);
-            double powerbrS = (mX * FAST_DRIVE_MULTIPLE);
+            double powerflD = (mY * -driveMultiple);
+            double powerfrD = (mY * -driveMultiple);
+            double powerblD = (mY * -driveMultiple);
+            double powerbrD = (mY * -driveMultiple);
+
+            double powerflS = (mX * driveMultiple);
+            double powerfrS = (mX * -driveMultiple);
+            double powerblS = (mX * -driveMultiple);
+            double powerbrS = (mX * driveMultiple);
 
             double powerfl = powerflS + powerflD;
             double powerfr = powerfrS + powerfrD;
@@ -183,25 +215,66 @@ public class POVmode extends LinearOpMode {
             backRightDriveMotor.setPower(powerbr);
 
             if(turn != 0) {
-                frontLeftDriveMotor.setPower(-turn * FAST_DRIVE_MULTIPLE);
-                backRightDriveMotor.setPower(turn * FAST_DRIVE_MULTIPLE);
-                backLeftDriveMotor.setPower(-turn * FAST_DRIVE_MULTIPLE);
-                frontRightDriveMotor.setPower(turn * FAST_DRIVE_MULTIPLE);
-            }
-            if (gamepad1.right_trigger> 0) {                    // right trigger turn wrist right
-                clawWristServo.setPosition(clawWristServo.getPosition() + (gamepad2.right_trigger * WRIST_TURN_MULTIPLE));
-            }
-            if (gamepad1.left_trigger > 0) {                   // left trigger turn wrist left
-                clawWristServo.setPosition(clawWristServo.getPosition() - (gamepad2.left_trigger * WRIST_TURN_MULTIPLE));
-            }
-            if (gamepad1.dpad_up){
-                stoneServo.setPosition(STONE_PICKER_OPEN);
-            }
-            if(gamepad1.dpad_down){
-                stoneServo.setPosition(STONE_PICKER_CLOSED);
+                frontLeftDriveMotor.setPower(-turn * driveMultiple);
+                backRightDriveMotor.setPower(turn * driveMultiple);
+                backLeftDriveMotor.setPower(-turn * driveMultiple);
+                frontRightDriveMotor.setPower(turn * driveMultiple);
             }
 
-            /*
+            if (gamepad1.left_bumper){
+                stoneServo.setPosition(STONE_PICKER_OPEN);
+            }
+            if(gamepad1.right_bumper){
+                stoneServo.setPosition(STONE_PICKER_CLOSED);
+            }
+            if(gamepad1.dpad_up){
+                foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
+            }
+            if (gamepad1.dpad_down) {
+                foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
+            }
+
+            if(gamepad1.x){
+                alignmentServo.setPosition(ALIGNMENT_OPEN);
+            }
+            if(gamepad1.b){
+                alignmentServo.setPosition(ALIGNMENT_CLOSED);
+            }
+
+
+           /* if(gamepad1.y){
+                run = true;
+            }
+            if (run){
+                int distance = 6;
+                int circumference = 12;
+                int target = (int) ((distance * 1440)/circumference);
+                int flcurrentpos = frontLeftDriveMotor.getCurrentPosition();
+                int frcurrentpos = frontRightDriveMotor.getCurrentPosition();
+                int blcurrentpos = backLeftDriveMotor.getCurrentPosition();
+                int brcurrentpos = backRightDriveMotor.getCurrentPosition();
+
+                frontLeftDriveMotor.setTargetPosition(-target + flcurrentpos);
+                frontRightDriveMotor.setTargetPosition(target + frcurrentpos);
+                backLeftDriveMotor.setTargetPosition(-target + blcurrentpos);
+                backRightDriveMotor.setTargetPosition(target + brcurrentpos);
+
+                frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+                if((frontLeftDriveMotor.getCurrentPosition() == target)&&(frontRightDriveMotor.getCurrentPosition() == -target)&&(backLeftDriveMotor.getCurrentPosition() == target) && (backRightDriveMotor.getCurrentPosition() == -target)){
+                    frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+                    run = false;
+                }
+            }
+            */
+                        /*
                 temporary code to automate arm
              */
 
@@ -211,15 +284,48 @@ public class POVmode extends LinearOpMode {
             // ABOVE MIGHT BE WRONG
             // assuming 15 degrees movement per rotation ~15 degrees. 360/24
 
-            currentState = gamepad1.a;
+            currentState = gamepad2.a;
             if ((currentState == false) && (lastState == true)){
                 targetPosition++;
             }
-            if(gamepad1.x){
+            if(gamepad2.x){
                 targetPosition = 0;
             }
-            if (gamepad1.b) {
+            if (gamepad2.y) {
                 runProgram = true;
+            }
+            double height;
+            double heightsq;
+            double basesq;
+            double hypotenuse;
+            double angleInRadians;
+            double angleInDegrees;
+            double ticsToMove;
+            double ticsPerBlock;
+            double ticsPerInch;
+            if(targetPosition == 0){
+                numberToClear = 5.5;
+                height = numberToClear;
+                height = (targetPosition * 4) + numberToClear;
+                heightsq = Math.pow(height, 2);
+                basesq = Math.pow(BASE_LENGTH, 2);
+                hypotenuse = Math.sqrt(heightsq + basesq);
+                angleInRadians = Math.asin(height/hypotenuse);
+                angleInDegrees = angleInRadians * (180 / Math.PI);
+                ticsToMove = angleInDegrees * TICS_PER_DEGREE;
+                ticsPerInch = ticsToMove / height;
+                currentPosition = 0;
+            }else{
+                numberToClear = 1.5;
+                height = (targetPosition * 4) + numberToClear;
+                heightsq = Math.pow(height, 2);
+                basesq = Math.pow(BASE_LENGTH, 2);
+                hypotenuse = Math.sqrt(heightsq + basesq);
+                angleInRadians = Math.asin(height/hypotenuse);
+                angleInDegrees = angleInRadians * (180 / Math.PI);
+                ticsToMove = angleInDegrees * TICS_PER_DEGREE;
+                ticsPerBlock = (ticsToMove/4) - 2;
+                currentPosition = (int)(armRotateMotor.getCurrentPosition() / ticsPerBlock);
             }
             if (runProgram) {
                 if (armLimitTouchFront.getState() == false) {
@@ -227,86 +333,66 @@ public class POVmode extends LinearOpMode {
                     armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     armRotateMotor.setPower(1.0);
                 }
+                if(targetPosition == 0){
+                    alignmentServo.setPosition(ALIGNMENT_OPEN);
+                }
+                else{
+                    alignmentServo.setPosition(ALIGNMENT_CLOSED);
+                }
 
                 //calculating current position
-
-                currentPosition = (int)(armRotateMotor.getCurrentPosition() / TICS_PER_BLOCK);
-                if (currentPosition < targetPosition) {
-                    if ((armRotateMotor.getCurrentPosition()) <= ((targetPosition * TICS_PER_BLOCK) - 50)) {
-                        // move arm up/down because arm is already contracted
-                        if (armExtendMotor.getCurrentPosition() <= (extendMotorStartPos + 50)) {
-                            // arm is contracted, move arm
-                            armRotateMotor.setTargetPosition(TICS_PER_BLOCK * targetPosition);
-                            armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                            armRotateMotor.setPower(1.0);
-                            tester = 1;
-                        } else {
-                            // contract arm before moving arm
-                            armExtendMotor.setTargetPosition(extendMotorStartPos);
-                            armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                            armExtendMotor.setPower(0.3);
-                            tester = 2;
-                        }
-                    } else {
-                        // extend arm
-                        double bSquared = Math.pow(ARM_LENGTH, 2);
-                        double x = Math.pow(4 + (4 * targetPosition), 2);
-                        double newH = Math.sqrt(bSquared + x);
-                        double deltaH = newH - ARM_LENGTH;
-                        double rotationsOfArmExtension = deltaH / SPINDLE_CIRCUMFERENCE;
-                        int armExPos = 0;
-
-                        armExPos = (int) (rotationsOfArmExtension * TICS_PER_ROTATION);
-                        armExtendMotor.setTargetPosition(armExPos);
-                        armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                        armExtendMotor.setPower(0.3);
-                        tester = 3;
-
-                        if (armExtendMotor.getCurrentPosition() >= Math.abs(armExPos) - 50) {
-                            runProgram = false;
-                        }
-                    }
-                }else{
-                    if ((armRotateMotor.getCurrentPosition()) >= ((targetPosition * TICS_PER_BLOCK) + 50)) {
-                        // move arm up/down because arm is already contracted
-                        if (armExtendMotor.getCurrentPosition() <= (extendMotorStartPos + 50)) {
-                            // arm is contracted, move arm
-                            armRotateMotor.setTargetPosition(TICS_PER_BLOCK * targetPosition);
-                            armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                            armRotateMotor.setPower(1.0);
-                            tester = 4;
-                        } else {
-                            // contract arm before moving arm
-                            armExtendMotor.setTargetPosition(extendMotorStartPos);
-                            armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                            armExtendMotor.setPower(0.3);
-                            tester = 5;
-                        }
-                    }else{
-                        // extend arm
-                        double bSquared = Math.pow(ARM_LENGTH, 2);
-                        double x = Math.pow(4 + (4 * targetPosition), 2);
-                        double newH = Math.sqrt(bSquared + x);
-                        double deltaH = newH - ARM_LENGTH;
-                        double rotationsOfArmExtension = deltaH / SPINDLE_CIRCUMFERENCE;
-                        int armExPos = 0;
-
-                        armExPos = (int) (rotationsOfArmExtension * TICS_PER_ROTATION);
-                        armExtendMotor.setTargetPosition(armExPos);
-                        armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                        armExtendMotor.setPower(0.3);
-                        tester = 6;
-
-                        if (armExtendMotor.getCurrentPosition() <= Math.abs(armExPos) + 50) {
-                            runProgram = false;
-                        }
-                    }
+        if ((armRotateMotor.getCurrentPosition()) <= (ticsToMove - 50)) {
+                // move arm up/down because arm is already contracted
+                if (armExtendMotor.getCurrentPosition() <= (extendMotorStartPos + 50)) {
+                    // arm is contracted, move arm
+                    armRotateMotor.setTargetPosition((int) (ticsToMove));
+                    armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    armRotateMotor.setPower(1.0);
+                    tester = 1;
+                } else {
+                    // contract arm before moving arm
+                    armExtendMotor.setTargetPosition(extendMotorStartPos);
+                    armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    armExtendMotor.setPower(0.3);
+                    tester = 2;
                 }
-            }else{
+            }
+       else if ((armRotateMotor.getCurrentPosition()) >= (ticsToMove + 50)) {
+                    // move arm up/down because arm is already contracted
+                    if (armExtendMotor.getCurrentPosition() <= (extendMotorStartPos + 50)) {
+                        // arm is contracted, move arm
+                        armRotateMotor.setTargetPosition((int)(ticsToMove));
+                        armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        armRotateMotor.setPower(1.0);
+                        tester = 3;
+                    } else {
+                        // contract arm before moving arm
+                        armExtendMotor.setTargetPosition(extendMotorStartPos);
+                        armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        armExtendMotor.setPower(0.3);
+                        tester = 4;
+                    }
+       } else {
+                    // extend arm
+                    double deltaH = hypotenuse - ARM_LENGTH;
+                    double rotationsOfArmExtension = deltaH / SPINDLE_CIRCUMFERENCE;
+                    int armExPos = 0;
+
+                    armExPos = (int) (rotationsOfArmExtension * TICS_PER_ROTATION_EXTENTION_MOTOR);
+                    armExtendMotor.setTargetPosition(armExPos);
+                    armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    armExtendMotor.setPower(0.3);
+                    tester = 5;
+                    if (armExtendMotor.getCurrentPosition() >= armExPos - 50) {
+                        runProgram = false;
+                    }
+              }
+            } else {
                 //DRIVER 2 : Gamepad 2 controls
 
                 double armRotate = gamepad2.right_stick_y;          //Set multiples for rotating and extending the arm
                 double armExtend = gamepad2.left_stick_y;
+
 
                 if ((armRotate > 0) && (armLimitTouchBack.getState() == true)) {                                // right stick y to rotate arm up
                     armRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -315,7 +401,7 @@ public class POVmode extends LinearOpMode {
                     armRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     armRotateMotor.setPower(-1);
                 }
-                else{
+                else {
                     armRotateMotor.setPower(0.0);
                 }
 
@@ -333,12 +419,6 @@ public class POVmode extends LinearOpMode {
                 }
             }
 
-            if(gamepad2.dpad_up){
-                foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
-            }
-            if (gamepad2.dpad_down) {
-                foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
-            }
             if (gamepad2.right_bumper) {                        // right bumper to turn wrist right 90 degrees
                 clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
             }
@@ -351,18 +431,17 @@ public class POVmode extends LinearOpMode {
             if (gamepad2.left_trigger > 0) {                   // left trigger turn wrist left
                 clawWristServo.setPosition(clawWristServo.getPosition() - (gamepad2.left_trigger * WRIST_TURN_MULTIPLE));
             }
-            if (gamepad2.y) {                                   // y button on gamepad2 to close claw
+            if (gamepad2.dpad_up) {                                   // y button on gamepad2 to close claw
                 clawFingersServo.setPosition(FINGERS_CLOSED);
             }
-            if (gamepad2.a) {                                   // a button on gamepad2 to open claw
+            if (gamepad2.dpad_down) {                                   // a button on gamepad2 to open claw
                 clawFingersServo.setPosition(FINGERS_OPEN);
             }
-            if ((gamepad2.x)&&(gamepad2.dpad_left)){
-                capstoneServo.setPosition(CAPSTONE_DROPPED);
+            if (gamepad2.back){
+                    capstoneServo.setPosition(CAPSTONE_DROPPED);
             }
-            if((gamepad2.b)&&(gamepad2.dpad_left)){
-                capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
-            }
+
+
            /* if((armRotate == 0) && (armExtend == 0) && (clawFingers.getPosition() == FINGERS_OPEN) && (!gamepad2.left_bumper) && (gamepad2.right_trigger == 0) && (gamepad2.left_trigger == 0)){
                 clawWrist.setPosition(WRIST_TURN_HORIZONTAL);
                 setting position to always be horizontal unless something is pressed or fingers are closed
@@ -377,7 +456,7 @@ public class POVmode extends LinearOpMode {
 
 
             // telemetry only below here ...
-            telemetry.addData("Arm touch front: ", armLimitTouchFront.getState());
+           /* telemetry.addData("Arm touch front: ", armLimitTouchFront.getState());
             telemetry.addData("Arm touch Back: ", armLimitTouchBack.getState());
             telemetry.addData("Arm extend position", armExtendMotor.getCurrentPosition());
             telemetry.addData("mX: ", mX);
@@ -395,12 +474,16 @@ public class POVmode extends LinearOpMode {
             telemetry.addData("armExtendMotor: ", armExtendMotorValue);
             String armRotateMotorValue = armRotateMotor.getCurrentPosition() + ", " + armExtendMotor.getMode() + ", " + armRotateMotor.getDirection() + ", " + armRotateMotor.getPower();
             telemetry.addData("armRotateMotor: ", armRotateMotorValue);
-          //  String foundationGrabberServoValue = Double.toString(foundationGrabberServo.getPosition());
-          //  telemetry.addData("foundationGrabberServo: ", foundationGrabberServoValue);
-          //  telemetry.addData("Battery", this.hardwareMap.voltageSensor.iterator().next().getVoltage());
+            //  String foundationGrabberServoValue = Double.toString(foundationGrabberServo.getPosition());
+            //  telemetry.addData("foundationGrabberServo: ", foundationGrabberServoValue);
+            //  telemetry.addData("Battery", this.hardwareMap.voltageSensor.iterator().next().getVoltage());*/
             telemetry.addData("Target Position: ", targetPosition);
-            telemetry.addData("Current: ", currentPosition);
+          /*  telemetry.addData("Current: ", currentPosition);
             telemetry.addData("Tester: ", tester);
+            telemetry.addData("height", height);
+            telemetry.addData("hypotenuse", hypotenuse);
+            telemetry.addData("angle", angleInDegrees);
+            telemetry.addData("Tics To Move", ticsToMove);*/
 
             telemetry.update();
             lastState = currentState;
