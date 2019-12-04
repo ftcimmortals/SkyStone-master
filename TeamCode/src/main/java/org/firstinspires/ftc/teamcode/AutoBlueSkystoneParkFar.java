@@ -361,34 +361,30 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                     double Ypos = translation.get(1)/mmPerInch;
                     telemetry.addData("Ypos: ",absolute(Ypos));
                     telemetry.update();
-                    moveForwardTime(0.75, false, 0.75*timeMultiple);
-                    sleep(500);
+                    moveForwardTime(0.9, false, 0.75*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
-                    sleep(500);
-                    moveForwardTime(0.75, true, 0.35*timeMultiple);
+                    sleep(1000);
+                    moveForwardTime(0.9, true, 0.35*timeMultiple);
                     turnTime(0.5, false, 1.6*timeMultiple);
-                    moveForwardTime(0.75, false, 2.5*timeMultiple);
-                    sleep(500);
+                    moveForwardTime(0.9, false, 2.5*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(0.75, true, 2.5*timeMultiple);
-                    turnTime(0.5, true, 1.65*timeMultiple);
-                    moveSideTime(0.75, false, 1.85*timeMultiple);
-                    moveForwardTime(0.75, false, 0.2*timeMultiple);
-                    sleep(500);
+                    moveForwardTime(0.9, true, 2.5*timeMultiple);
+                    turnTime(0.5, true, 1.6*timeMultiple);
+                    moveSideTime(0.9, false, 1.85*timeMultiple);
+                    moveForwardTime(0.9, false, 0.2*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
-                    sleep(500);
-                    moveForwardTime(0.75, true, 0.4*timeMultiple);
-                    moveSideTime(0.75, true, 1.75*timeMultiple);
+                    sleep(1000);
+                    moveForwardTime(0.9, true, 0.45*timeMultiple);
+                    moveSideTime(0.9, true, 1.75*timeMultiple);
                     turnTime(0.5, false, 1.6*timeMultiple);
-                    moveForwardTime(0.75, false, 2.5*timeMultiple);
-                    sleep(500);
+                    moveForwardTime(0.9, false, 2.7*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(1, true, 0.4*timeMultiple);
+                    moveForwardTime(1, true, 0.5*timeMultiple);
                 }else{
                     //Second stone
-                    moveSideTime(0.5, false, 0.75*timeMultiple);
+                    moveSideTime(0.5, false, 0.8*timeMultiple);
                     targetVisible = false;
                     for(int ii=0; ii<2; ii++) {
                         VuforiaTrackable trackable = allTrackables.get(0);
@@ -405,57 +401,49 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                         }
                     }
                         if (targetVisible){
-                            moveForwardTime(0.75, false, 0.75*timeMultiple);
-                            sleep(500);
+                            moveForwardTime(0.9, false, 0.75*timeMultiple);
                             stoneServo.setPosition(STONE_PICKER_OPEN);
-                            sleep(500);
-                            moveForwardTime(0.75, true, 0.35*timeMultiple);
+                            sleep(1000);
+                            moveForwardTime(0.9, true, 0.35*timeMultiple);
                             turnTime(0.5, false, 1.6*timeMultiple);
-                            moveForwardTime(0.75, false, 3.2*timeMultiple);
-                            sleep(500);
+                            moveForwardTime(0.9, false, 3.2*timeMultiple);
                             stoneServo.setPosition(STONE_PICKER_CLOSED);
                             sleep(500);
-                            moveForwardTime(0.75, true, 3.2*timeMultiple);
-                            turnTime(0.5, true, 1.65*timeMultiple);
-                            moveSideTime(0.75, false, 1.85*timeMultiple);
-                            moveForwardTime(0.75, false, 0.2*timeMultiple);
-                            sleep(500);
+                            moveForwardTime(0.9, true, 3.2*timeMultiple);
+                            turnTime(0.5, true, 1.6*timeMultiple);
+                            moveSideTime(0.9, false, 1.85*timeMultiple);
+                            moveForwardTime(0.9, false, 0.2*timeMultiple);
                             stoneServo.setPosition(STONE_PICKER_OPEN);
-                            sleep(500);
-                            moveForwardTime(0.75, true, 0.4*timeMultiple);
-                            moveSideTime(0.75, true, 1.75*timeMultiple);
+                            sleep(1000);
+                            moveForwardTime(0.9, true, 0.45*timeMultiple);
+                            moveSideTime(0.9, true, 1.75*timeMultiple);
                             turnTime(0.5, false, 1.6*timeMultiple);
-                            moveForwardTime(0.75, false, 3.2*timeMultiple);
-                            sleep(500);
+                            moveForwardTime(0.9, false, 3.4*timeMultiple);
                             stoneServo.setPosition(STONE_PICKER_CLOSED);
                             sleep(500);
-                            moveForwardTime(1, true, 0.4*timeMultiple);
+                            moveForwardTime(1, true, 0.5*timeMultiple);
                         }else{
                             //Third stone
-                            moveSideTime(0.5, false, 0.75*timeMultiple);
-                            moveForwardTime(0.75, false, 0.75*timeMultiple);
-                            sleep(500);
+                            moveSideTime(0.5, false, 0.8*timeMultiple);
+                            moveForwardTime(0.9, false, 0.75*timeMultiple);
                             stoneServo.setPosition(STONE_PICKER_OPEN);
-                            sleep(500);
-                            moveForwardTime(0.75, true, 0.35*timeMultiple);
+                            sleep(1000);
+                            moveForwardTime(0.9, true, 0.35*timeMultiple);
                             turnTime(0.5, false, 1.6*timeMultiple);
-                            moveForwardTime(0.75, false, 3.5 *timeMultiple);
-                            sleep(500);
+                            moveForwardTime(0.9, false, 3.5 *timeMultiple);
                             stoneServo.setPosition(STONE_PICKER_CLOSED);
                             sleep(500);
-                            moveForwardTime(0.75, true, 2.7*timeMultiple);
-                            turnTime(0.5, true, 1.65*timeMultiple);
-                            moveForwardTime(0.75, false, 0.2*timeMultiple);
-                            sleep(500);
+                            moveForwardTime(0.9, true, 2.7*timeMultiple);
+                            turnTime(0.5, true, 1.6*timeMultiple);
+                            moveForwardTime(0.9, false, 0.2*timeMultiple);
                             stoneServo.setPosition(STONE_PICKER_OPEN);
-                            sleep(500);
-                            moveForwardTime(0.75, true, 0.35*timeMultiple);
+                            sleep(1000);
+                            moveForwardTime(0.9, true, 0.45*timeMultiple);
                             turnTime(0.5, false, 1.6*timeMultiple);
-                            moveForwardTime(0.75, false, 2.5*timeMultiple);
-                            sleep(500);
+                            moveForwardTime(0.9, false, 2.7*timeMultiple);
                             stoneServo.setPosition(STONE_PICKER_CLOSED);
                             sleep(500);
-                            moveForwardTime(1, true, 0.4*timeMultiple);
+                            moveForwardTime(1, true, 0.5*timeMultiple);
                         }
                 }
 
