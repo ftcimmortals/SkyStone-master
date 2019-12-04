@@ -201,6 +201,11 @@ public class AutoRedSkystoneParkFar extends LinearOpMode {
 
         capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
 
+        frontLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
          * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
@@ -317,6 +322,9 @@ public class AutoRedSkystoneParkFar extends LinearOpMode {
         if(opModeIsActive()) {
             double voltage = this.hardwareMap.voltageSensor.iterator().next().getVoltage();
             double timeMultiple = (-0.1*voltage) + 2.25;
+            double forwardPower = 0.8;
+            double sidePower = 0.8;
+            double turnPower = 0.5;
 
             // check all the trackable targets to see which one (if any) is visible.
             moveForwardTime(0.5, false, 1*timeMultiple);
@@ -361,34 +369,30 @@ public class AutoRedSkystoneParkFar extends LinearOpMode {
                 double Ypos = translation.get(1)/mmPerInch;
                 telemetry.addData("Ypos: ",absolute(Ypos));
                 telemetry.update();
-                moveForwardTime(0.75, false, 0.75*timeMultiple);
-                sleep(500);
+                moveForwardTime(forwardPower, false, 0.75*timeMultiple);
                 stoneServo.setPosition(STONE_PICKER_OPEN);
-                sleep(500);
-                moveForwardTime(0.75, true, 0.35*timeMultiple);
-                turnTime(0.5, true, 1.65*timeMultiple);
-                moveForwardTime(0.75, false, 2.5*timeMultiple);
-                sleep(500);
+                sleep(1000);
+                moveForwardTime(forwardPower, true, 0.35*timeMultiple);
+                turnTime(turnPower, true, 1.7*timeMultiple);
+                moveForwardTime(forwardPower, false, 2.5*timeMultiple);
                 stoneServo.setPosition(STONE_PICKER_CLOSED);
                 sleep(500);
-                moveForwardTime(0.75, true, 2.5*timeMultiple);
-                turnTime(0.5, false, 1.6*timeMultiple);
-                moveSideTime(0.75, true, 1.85*timeMultiple);
-                moveForwardTime(0.75, false, 0.2*timeMultiple);
-                sleep(500);
+                moveForwardTime(forwardPower, true, 2.5*timeMultiple);
+                turnTime(turnPower, false, 1.6*timeMultiple);
+                moveSideTime(sidePower, true, 1.85*timeMultiple);
+                moveForwardTime(forwardPower, false, 0.2*timeMultiple);
                 stoneServo.setPosition(STONE_PICKER_OPEN);
-                sleep(500);
-                moveForwardTime(0.75, true, 0.4*timeMultiple);
-                moveSideTime(0.75, false, 1.75*timeMultiple);
-                turnTime(0.5, true, 1.65*timeMultiple);
-                moveForwardTime(0.75, false, 2.5*timeMultiple);
-                sleep(500);
+                sleep(1000);
+                moveForwardTime(forwardPower, true, 0.45*timeMultiple);
+                moveSideTime(sidePower, false, 1.75*timeMultiple);
+                turnTime(turnPower, true, 1.7*timeMultiple);
+                moveForwardTime(forwardPower, false, 2.7*timeMultiple);
                 stoneServo.setPosition(STONE_PICKER_CLOSED);
                 sleep(500);
-                moveForwardTime(1, true, 0.4*timeMultiple);
+                moveForwardTime(forwardPower, true, 0.5*timeMultiple);
             }else{
                 //Second stone
-                moveSideTime(0.5, true, 0.75*timeMultiple);
+                moveSideTime(0.5, true, 0.8*timeMultiple);
                 targetVisible = false;
                 for(int ii=0; ii<2; ii++) {
                     VuforiaTrackable trackable = allTrackables.get(0);
@@ -405,57 +409,49 @@ public class AutoRedSkystoneParkFar extends LinearOpMode {
                     }
                 }
                 if (targetVisible){
-                    moveForwardTime(0.75, false, 0.75*timeMultiple);
-                    sleep(500);
+                    moveForwardTime(forwardPower, false, 0.75*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
-                    sleep(500);
-                    moveForwardTime(0.75, true, 0.35*timeMultiple);
-                    turnTime(0.5, true, 1.65*timeMultiple);
-                    moveForwardTime(0.75, false, 3.2*timeMultiple);
-                    sleep(500);
+                    sleep(1000);
+                    moveForwardTime(forwardPower, true, 0.35*timeMultiple);
+                    turnTime(turnPower, true, 1.7*timeMultiple);
+                    moveForwardTime(forwardPower, false, 3.2*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(0.75, true, 3.2*timeMultiple);
-                    turnTime(0.5, false, 1.6*timeMultiple);
-                    moveSideTime(0.75, true, 1.85*timeMultiple);
-                    moveForwardTime(0.75, false, 0.2*timeMultiple);
-                    sleep(500);
+                    moveForwardTime(forwardPower, true, 3.2*timeMultiple);
+                    turnTime(turnPower, false, 1.6*timeMultiple);
+                    moveSideTime(sidePower, true, 1.85*timeMultiple);
+                    moveForwardTime(forwardPower, false, 0.2*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
-                    sleep(500);
-                    moveForwardTime(0.75, true, 0.4*timeMultiple);
-                    moveSideTime(0.75, false, 1.75*timeMultiple);
-                    turnTime(0.5, true, 1.65*timeMultiple);
-                    moveForwardTime(0.75, false, 3.2*timeMultiple);
-                    sleep(500);
+                    sleep(1000);
+                    moveForwardTime(forwardPower, true, 0.45*timeMultiple);
+                    moveSideTime(sidePower, false, 1.75*timeMultiple);
+                    turnTime(turnPower, true, 1.7*timeMultiple);
+                    moveForwardTime(forwardPower, false, 3.4*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(1, true, 0.4*timeMultiple);
+                    moveForwardTime(forwardPower, true, 0.5*timeMultiple);
                 }else{
                     //Third stone
-                    moveSideTime(0.5, true, 0.75*timeMultiple);
-                    moveForwardTime(0.75, false, 0.75*timeMultiple);
-                    sleep(500);
+                    moveSideTime(0.5, true, 0.8*timeMultiple);
+                    moveForwardTime(forwardPower, false, 0.75*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
-                    sleep(500);
-                    moveForwardTime(0.75, true, 0.35*timeMultiple);
-                    turnTime(0.5, true, 1.65*timeMultiple);
-                    moveForwardTime(0.75, false, 3.5 *timeMultiple);
-                    sleep(500);
+                    sleep(1000);
+                    moveForwardTime(forwardPower, true, 0.35*timeMultiple);
+                    turnTime(turnPower, true, 1.7*timeMultiple);
+                    moveForwardTime(forwardPower, false, 3.5 *timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(0.75, true, 2.7*timeMultiple);
-                    turnTime(0.5, false, 1.6*timeMultiple);
-                    moveForwardTime(0.75, false, 0.2*timeMultiple);
-                    sleep(500);
+                    moveForwardTime(forwardPower, true, 2.7*timeMultiple);
+                    turnTime(turnPower, false, 1.6*timeMultiple);
+                    moveForwardTime(forwardPower, false, 0.2*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
-                    sleep(500);
-                    moveForwardTime(0.75, true, 0.35*timeMultiple);
-                    turnTime(0.5, true, 1.65*timeMultiple);
-                    moveForwardTime(0.75, false, 2.5*timeMultiple);
-                    sleep(500);
+                    sleep(1000);
+                    moveForwardTime(forwardPower, true, 0.45*timeMultiple);
+                    turnTime(turnPower, true, 1.7*timeMultiple);
+                    moveForwardTime(forwardPower, false, 2.7*timeMultiple);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(1, true, 0.4*timeMultiple);
+                    moveForwardTime(forwardPower, true, 0.5*timeMultiple);
                 }
             }
 
@@ -558,69 +554,6 @@ public class AutoRedSkystoneParkFar extends LinearOpMode {
         }
         return (0);
     }
-    public double moveForward(double wheelPower, boolean direction) {
-        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // direction true => forward
-        // direction false => backward
-        frontRightDriveMotor.setPower(0);
-        frontLeftDriveMotor.setPower(0);
-        backRightDriveMotor.setPower(0);
-        backLeftDriveMotor.setPower(0);
-
-        if (direction) {
-
-            frontLeftDriveMotor.setPower(wheelPower);
-            frontRightDriveMotor.setPower(wheelPower);
-            backLeftDriveMotor.setPower(wheelPower);
-            backRightDriveMotor.setPower(wheelPower);
-        }
-
-        else {
-
-            frontLeftDriveMotor.setPower(-wheelPower);
-            frontRightDriveMotor.setPower(-wheelPower);
-            backLeftDriveMotor.setPower(-wheelPower);
-            backRightDriveMotor.setPower(-wheelPower);
-        }
-        return (0);
-    }
-    public double moveSide(double wheelPower, boolean direction) {
-        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // direction true => right
-        // direction false => left
-        frontRightDriveMotor.setPower(0);
-        frontLeftDriveMotor.setPower(0);
-        backRightDriveMotor.setPower(0);
-        backLeftDriveMotor.setPower(0);
-
-        if (direction) {
-            frontLeftDriveMotor.setPower(wheelPower);
-            frontRightDriveMotor.setPower(-wheelPower);
-            backLeftDriveMotor.setPower(-wheelPower);
-            backRightDriveMotor.setPower(wheelPower);
-        }
-        else {
-            frontLeftDriveMotor.setPower(-wheelPower);
-            frontRightDriveMotor.setPower(wheelPower);
-            backLeftDriveMotor.setPower(wheelPower);
-            backRightDriveMotor.setPower(-wheelPower);
-        }
-        return (0);
-    }
-    public double moveStop(){
-        frontLeftDriveMotor.setPower(0);
-        frontRightDriveMotor.setPower(0);
-        backLeftDriveMotor.setPower(0);
-        backRightDriveMotor.setPower(0);
-
-        return (0);
-    }
     public double absolute(double inputval) {
         if (inputval > 0) {
             return inputval;
@@ -673,6 +606,5 @@ public class AutoRedSkystoneParkFar extends LinearOpMode {
         }
         return (0);
     }
-
 }
 
