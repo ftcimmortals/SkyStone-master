@@ -687,7 +687,7 @@ public class AutoRedSkystoneParkFar extends LinearOpMode {
         int ticksTol = 50;
 
         if (direction) {
-            double sideMultiple = 1.1;
+            double sideMultiple = 1.3;
             FLtarget = (int)(ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
             FRtarget =(int)(-ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
             BLtarget = (int)(-ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
