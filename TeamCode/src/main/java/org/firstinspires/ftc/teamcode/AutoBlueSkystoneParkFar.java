@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -322,12 +323,14 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         if(opModeIsActive()) {
             double voltage = this.hardwareMap.voltageSensor.iterator().next().getVoltage();
             double timeMultiple = (-0.1*voltage) + 2.25;
-            double forwardPower = 0.8;
-            double sidePower = 0.8;
+            double forwardPowerSlow = 0.5;
+            double sidePowerSlow = 0.5;
+            double forwardPowerFast = 0.9;
+            double sidePowerFast = 0.6;
             double turnPower = 0.5;
 
             // check all the trackable targets to see which one (if any) is visible.
-            moveForwardTime(0.5, false, 1*timeMultiple);
+            moveForwardInches(forwardPowerSlow, false, 16);
             targetVisible = false;
 
             int ticsPerDegree = (int) ((1425.2 *24)/360);
@@ -338,7 +341,6 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             armRotateMotor.setTargetPosition(ticsPerDegree * degrees);
             armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             armRotateMotor.setPower(1);
-
 
             for(int ii=0; ii<2; ii++) {
                 VuforiaTrackable trackable = allTrackables.get(0);
@@ -369,30 +371,30 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                 double Ypos = translation.get(1)/mmPerInch;
                 telemetry.addData("Ypos: ",absolute(Ypos));
                 telemetry.update();
-                moveForwardTime(forwardPower, false, 0.75*timeMultiple);
+                moveForwardInches(forwardPowerSlow, false, 17);
                 stoneServo.setPosition(STONE_PICKER_OPEN);
                 sleep(1000);
-                moveForwardTime(forwardPower, true, 0.35*timeMultiple);
-                turnTime(turnPower, false, 1.6*timeMultiple);
-                moveForwardTime(forwardPower, false, 2.5*timeMultiple);
+                moveForwardInches(forwardPowerSlow, true, 7);
+                moveTurnDegrees(turnPower, false, 90);
+                moveForwardInches(forwardPowerFast, false, 60);
                 stoneServo.setPosition(STONE_PICKER_CLOSED);
                 sleep(500);
-                moveForwardTime(forwardPower, true, 2.5*timeMultiple);
-                turnTime(turnPower, true, 1.7*timeMultiple);
-                moveSideTime(sidePower, false, 1.85*timeMultiple);
-                moveForwardTime(forwardPower, false, 0.2*timeMultiple);
+                moveForwardInches(forwardPowerFast, true, 60);
+                moveTurnDegrees(turnPower, true, 90);
+                moveSideInches(sidePowerFast, false, 22);
+                moveForwardInches(0.4, false, 11);
                 stoneServo.setPosition(STONE_PICKER_OPEN);
                 sleep(1000);
-                moveForwardTime(forwardPower, true, 0.45*timeMultiple);
-                moveSideTime(sidePower, true, 1.75*timeMultiple);
-                turnTime(turnPower, false, 1.6*timeMultiple);
-                moveForwardTime(forwardPower, false, 2.7*timeMultiple);
+                moveForwardInches(forwardPowerSlow, true, 11);
+                moveSideInches(sidePowerFast, true, 22);
+                moveTurnDegrees(turnPower, false, 90);
+                moveForwardInches(forwardPowerFast, false, 60);
                 stoneServo.setPosition(STONE_PICKER_CLOSED);
                 sleep(500);
-                moveForwardTime(forwardPower, true, 0.5*timeMultiple);
+                moveForwardInches(forwardPowerFast, true, 28);
             }else{
                 //Second stone
-                moveSideTime(0.5, false, 0.8*timeMultiple);
+                moveSideInches(sidePowerSlow, false, 8);
                 targetVisible = false;
                 for(int ii=0; ii<2; ii++) {
                     VuforiaTrackable trackable = allTrackables.get(0);
@@ -409,49 +411,49 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                     }
                 }
                 if (targetVisible){
-                    moveForwardTime(forwardPower, false, 0.75*timeMultiple);
+                    moveForwardInches(forwardPowerSlow, false, 17);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
                     sleep(1000);
-                    moveForwardTime(forwardPower, true, 0.35*timeMultiple);
-                    turnTime(turnPower, false, 1.6*timeMultiple);
-                    moveForwardTime(forwardPower, false, 3.2*timeMultiple);
+                    moveForwardInches(forwardPowerSlow, true, 7);
+                    moveTurnDegrees(turnPower, false, 90);
+                    moveForwardInches(forwardPowerFast, false, 68);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(forwardPower, true, 3.2*timeMultiple);
-                    turnTime(turnPower, true, 1.7*timeMultiple);
-                    moveSideTime(sidePower, false, 1.85*timeMultiple);
-                    moveForwardTime(forwardPower, false, 0.2*timeMultiple);
+                    moveForwardInches(forwardPowerFast, true, 68);
+                    moveTurnDegrees(turnPower, true, 90);
+                    moveSideInches(sidePowerFast, false, 22);
+                    moveForwardInches(0.4, false, 11);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
                     sleep(1000);
-                    moveForwardTime(forwardPower, true, 0.45*timeMultiple);
-                    moveSideTime(sidePower, true, 1.75*timeMultiple);
-                    turnTime(turnPower, false, 1.6*timeMultiple);
-                    moveForwardTime(forwardPower, false, 3.4*timeMultiple);
+                    moveForwardInches(forwardPowerSlow, true, 11);
+                    moveSideInches(sidePowerFast, true, 22);
+                    moveTurnDegrees(turnPower, false, 90);
+                    moveForwardInches(forwardPowerFast, false, 68);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(forwardPower, true, 0.5*timeMultiple);
+                    moveForwardInches(forwardPowerFast, true, 28);
                 }else{
                     //Third stone
-                    moveSideTime(0.5, false, 0.8*timeMultiple);
-                    moveForwardTime(forwardPower, false, 0.75*timeMultiple);
+                    moveSideInches(sidePowerSlow, false, 8);
+                    moveForwardInches(0.4, false, 17);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
                     sleep(1000);
-                    moveForwardTime(forwardPower, true, 0.35*timeMultiple);
-                    turnTime(turnPower, false, 1.6*timeMultiple);
-                    moveForwardTime(forwardPower, false, 3.5 *timeMultiple);
+                    moveForwardInches(forwardPowerSlow, true, 7);
+                    moveTurnDegrees(turnPower, false, 90);
+                    moveForwardInches(forwardPowerFast, false, 72);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(forwardPower, true, 2.7*timeMultiple);
-                    turnTime(turnPower, true, 1.7*timeMultiple);
-                    moveForwardTime(forwardPower, false, 0.2*timeMultiple);
+                    moveForwardInches(forwardPowerFast, true, 54);
+                    moveTurnDegrees(turnPower, true, 90);
+                    moveForwardInches(0.4, false, 11);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
                     sleep(1000);
-                    moveForwardTime(forwardPower, true, 0.45*timeMultiple);
-                    turnTime(turnPower, false, 1.6*timeMultiple);
-                    moveForwardTime(forwardPower, false, 2.7*timeMultiple);
+                    moveForwardInches(forwardPowerSlow, true, 11);
+                    moveTurnDegrees(turnPower, false, 90);
+                    moveForwardInches(forwardPowerFast, false, 54);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
-                    moveForwardTime(forwardPower, true, 0.5*timeMultiple);
+                    moveForwardInches(forwardPowerFast, true, 24);
                 }
             }
 
@@ -604,6 +606,203 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             backLeftDriveMotor.setPower(0);
             backRightDriveMotor.setPower(0);
         }
+        return (0);
+    }
+    public double moveForwardInches(double wheelPower, boolean direction, double inches) {
+
+        // direction true => forward
+        // direction false => backward
+        int ticsPerMotor = 1120;
+        double circumference = 12.125;
+        double ticsPerInch = ticsPerMotor / circumference;
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 50;
+
+        if (direction) {
+            FLtarget = (int)(ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            frontLeftDriveMotor.setPower(wheelPower);
+            frontRightDriveMotor.setPower(wheelPower);
+            backLeftDriveMotor.setPower(wheelPower);
+            backRightDriveMotor.setPower(wheelPower);
+        }
+
+        else {
+            FLtarget = (int)(-ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(-ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(-ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(-ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            frontLeftDriveMotor.setPower(wheelPower);
+            frontRightDriveMotor.setPower(wheelPower);
+            backLeftDriveMotor.setPower(wheelPower);
+            backRightDriveMotor.setPower(wheelPower);
+        }
+        long timeToSleep = ((long) ((1000)*(inches / 20)));
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())){
+            sleep(50);
+        }
+        sleep(100);
+
+        return (0);
+    }
+    public double moveSideInches(double wheelPower, boolean direction, double inches) {
+
+        // direction true => right
+        // direction false => left
+        double ticsPerMotor = 1120;
+        double circumference = 12.125;
+        double ticsPerInch = ticsPerMotor / circumference;
+
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 50;
+
+        if (direction) {
+            double sideMultiple = 1.3;
+            FLtarget = (int)(ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(-ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(-ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            frontLeftDriveMotor.setPower(wheelPower);
+            frontRightDriveMotor.setPower(wheelPower);
+            backLeftDriveMotor.setPower(wheelPower);
+            backRightDriveMotor.setPower(wheelPower);
+        }
+
+        else {
+            double sideMultiple = 1.3;
+
+            FLtarget = (int)(-ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(-ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            frontLeftDriveMotor.setPower(wheelPower);
+            frontRightDriveMotor.setPower(wheelPower);
+            backLeftDriveMotor.setPower(wheelPower);
+            backRightDriveMotor.setPower(wheelPower);
+        }
+        long timeToSleep = ((long) ((1000)*((inches / 12))));
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())){
+            sleep(50);
+        }
+        sleep(100);
+
+        return (0);
+    }
+    public double moveTurnDegrees(double wheelPower, boolean direction, double degrees) {
+
+        // direction true => right
+        // direction false => left
+
+        double ticsPerMotor = 1120;
+        double degreesPerRotation = 48;
+        double ticsToMove = (degrees * ticsPerMotor) / degreesPerRotation;
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 50;
+
+        if (direction) {
+            FLtarget = (int)(-ticsToMove) + frontLeftDriveMotor.getCurrentPosition();
+            FRtarget =(int)(ticsToMove)+ frontRightDriveMotor.getCurrentPosition();
+            BLtarget = (int)(-ticsToMove) + backLeftDriveMotor.getCurrentPosition();
+            BRtarget = (int)(ticsToMove)+ backRightDriveMotor.getCurrentPosition();
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            frontLeftDriveMotor.setPower(wheelPower);
+            frontRightDriveMotor.setPower(wheelPower);
+            backLeftDriveMotor.setPower(wheelPower);
+            backRightDriveMotor.setPower(wheelPower);
+        }
+
+        else {
+            FLtarget = (int)(ticsToMove) + frontLeftDriveMotor.getCurrentPosition();
+            FRtarget =(int)(-ticsToMove)+ frontRightDriveMotor.getCurrentPosition();
+            BLtarget = (int)(ticsToMove) + backLeftDriveMotor.getCurrentPosition();
+            BRtarget = (int)(-ticsToMove)+ backRightDriveMotor.getCurrentPosition();
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            frontLeftDriveMotor.setPower(wheelPower);
+            frontRightDriveMotor.setPower(wheelPower);
+            backLeftDriveMotor.setPower(wheelPower);
+            backRightDriveMotor.setPower(wheelPower);
+        }
+        long timeToSleep = ((long)((1000)*((1.5)*(degrees / 90))));
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())){
+            sleep(50);
+        }
+        sleep(100);
+
         return (0);
     }
 }

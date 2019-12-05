@@ -102,12 +102,12 @@ public class TestEncoders extends LinearOpMode {
 
         waitForStart();
         if(opModeIsActive()) {
-            moveForwardInches(0.5, true, 24);
-            moveForwardInches(0.5, false, 24);
-            moveSideInches(0.5, true, 24);
-            moveSideInches(0.5, false, 24);
-            moveTurnDegrees(0.5, true, 90);
-            moveTurnDegrees(0.5, false, 90);
+//            moveForwardInches(0.5, true, 24);
+//            moveForwardInches(0.5, false, 24);
+            moveSideInches(0.5, true, 60);
+//            moveSideInches(0.5, false, 24);
+//            moveTurnDegrees(0.5, true, 90);
+//            moveTurnDegrees(0.5, false, 90);
         }
 
     }
@@ -119,12 +119,22 @@ public class TestEncoders extends LinearOpMode {
         int ticsPerMotor = 1120;
         double circumference = 12.125;
         double ticsPerInch = ticsPerMotor / circumference;
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 25;
 
         if (direction) {
-            frontLeftDriveMotor.setTargetPosition((int)(ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition()));
-            frontRightDriveMotor.setTargetPosition((int)(ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition()));
-            backLeftDriveMotor.setTargetPosition((int)(ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition()));
-            backRightDriveMotor.setTargetPosition((int)(ticsPerInch * inches + backRightDriveMotor.getCurrentPosition()));
+            FLtarget = (int)(ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
 
             frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -138,10 +148,15 @@ public class TestEncoders extends LinearOpMode {
         }
 
         else {
-            frontLeftDriveMotor.setTargetPosition((int) (-ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition()));
-            frontRightDriveMotor.setTargetPosition((int) (-ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition()));
-            backLeftDriveMotor.setTargetPosition((int) (-ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition()));
-            backRightDriveMotor.setTargetPosition((int) (-ticsPerInch * inches + backRightDriveMotor.getCurrentPosition()));
+            FLtarget = (int)(-ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(-ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(-ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(-ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
 
             frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -153,8 +168,11 @@ public class TestEncoders extends LinearOpMode {
             backLeftDriveMotor.setPower(wheelPower);
             backRightDriveMotor.setPower(wheelPower);
         }
-            long timeToSleep = ((long) ((1000)*(inches / 12)));
-            sleep(timeToSleep);
+        long timeToSleep = ((long) ((1000)*(inches / 20)));
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())){
+            sleep(50);
+        }
+        sleep(500);
 
         return (0);
     }
@@ -167,11 +185,22 @@ public class TestEncoders extends LinearOpMode {
         double circumference = 12.125;
         double ticsPerInch = ticsPerMotor / circumference;
 
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 25;
+
         if (direction) {
-            frontLeftDriveMotor.setTargetPosition((int)(ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition()));
-            frontRightDriveMotor.setTargetPosition(-(int)(ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition()));
-            backLeftDriveMotor.setTargetPosition(-(int)(ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition()));
-            backRightDriveMotor.setTargetPosition((int)(ticsPerInch * inches + backRightDriveMotor.getCurrentPosition()));
+            FLtarget = (int)(ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(-ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(-ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
 
             frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -185,10 +214,15 @@ public class TestEncoders extends LinearOpMode {
         }
 
         else {
-            frontLeftDriveMotor.setTargetPosition((int) (-ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition()));
-            frontRightDriveMotor.setTargetPosition((int) (ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition()));
-            backLeftDriveMotor.setTargetPosition((int) (ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition()));
-            backRightDriveMotor.setTargetPosition((int) (-ticsPerInch * inches + backRightDriveMotor.getCurrentPosition()));
+            FLtarget = (int)(-ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(-ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
 
             frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -201,7 +235,10 @@ public class TestEncoders extends LinearOpMode {
             backRightDriveMotor.setPower(wheelPower);
         }
         long timeToSleep = ((long) ((1000)*((inches / 12))));
-        sleep(timeToSleep);
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())){
+            sleep(50);
+        }
+        sleep(500);
 
         return (0);
     }
@@ -213,12 +250,22 @@ public class TestEncoders extends LinearOpMode {
         double ticsPerMotor = 1120;
         double degreesPerRotation = 48;
         double ticsToMove = (degrees * ticsPerMotor) / degreesPerRotation;
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 25;
 
         if (direction) {
-            frontLeftDriveMotor.setTargetPosition((int)(-ticsToMove) + frontLeftDriveMotor.getCurrentPosition());
-            frontRightDriveMotor.setTargetPosition((int)(ticsToMove)+ frontRightDriveMotor.getCurrentPosition());
-            backLeftDriveMotor.setTargetPosition((int)(-ticsToMove) + backLeftDriveMotor.getCurrentPosition());
-            backRightDriveMotor.setTargetPosition((int)(ticsToMove)+ backRightDriveMotor.getCurrentPosition());
+            FLtarget = (int)(-ticsToMove) + frontLeftDriveMotor.getCurrentPosition();
+            FRtarget =(int)(ticsToMove)+ frontRightDriveMotor.getCurrentPosition();
+            BLtarget = (int)(-ticsToMove) + backLeftDriveMotor.getCurrentPosition();
+            BRtarget = (int)(ticsToMove)+ backRightDriveMotor.getCurrentPosition();
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
 
             frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -232,10 +279,15 @@ public class TestEncoders extends LinearOpMode {
         }
 
         else {
-            frontLeftDriveMotor.setTargetPosition((int)(ticsToMove) + frontLeftDriveMotor.getCurrentPosition());
-            frontRightDriveMotor.setTargetPosition((int)(-ticsToMove)+ frontRightDriveMotor.getCurrentPosition());
-            backLeftDriveMotor.setTargetPosition((int)(ticsToMove) + backLeftDriveMotor.getCurrentPosition());
-            backRightDriveMotor.setTargetPosition((int)(-ticsToMove)+ backRightDriveMotor.getCurrentPosition());
+            FLtarget = (int)(ticsToMove) + frontLeftDriveMotor.getCurrentPosition();
+            FRtarget =(int)(-ticsToMove)+ frontRightDriveMotor.getCurrentPosition();
+            BLtarget = (int)(ticsToMove) + backLeftDriveMotor.getCurrentPosition();
+            BRtarget = (int)(-ticsToMove)+ backRightDriveMotor.getCurrentPosition();
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
 
             frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -247,9 +299,19 @@ public class TestEncoders extends LinearOpMode {
             backLeftDriveMotor.setPower(wheelPower);
             backRightDriveMotor.setPower(wheelPower);
         }
-        long timeToSleep = ((long)((1000)*((2)*(degrees / 90))));
-        sleep(timeToSleep);
+        long timeToSleep = ((long)((1000)*((1.5)*(degrees / 90))));
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())){
+            sleep(50);
+        }
+        sleep(500);
 
         return (0);
+    }
+    public double absolute(double inputval) {
+        if (inputval > 0) {
+            return inputval;
+        } else {
+            return -1 * inputval;
+        }
     }
 }
