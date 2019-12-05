@@ -146,10 +146,10 @@ public class POVmode extends LinearOpMode {
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        backRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
 
         clawFingersServo.setPosition(FINGERS_OPEN);                   //set fingers position at init

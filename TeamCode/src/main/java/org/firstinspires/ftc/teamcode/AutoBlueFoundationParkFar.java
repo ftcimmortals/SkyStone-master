@@ -77,10 +77,10 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
         armLimitTouchFront.setMode(DigitalChannel.Mode.INPUT);
         armLimitTouchBack.setMode(DigitalChannel.Mode.INPUT);
 
-        frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        backRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
         clawFingersServo.setPosition(FINGERS_OPEN);
