@@ -335,13 +335,13 @@ public class AutoRedSkystoneParkFar extends LinearOpMode {
 
             int ticsPerDegree = (int) ((1425.2 *24)/360);
             int degrees = 132;
-/*
+
             armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             armRotateMotor.setDirection(DcMotorSimple.Direction.FORWARD);
             armRotateMotor.setTargetPosition(ticsPerDegree * degrees);
             armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             armRotateMotor.setPower(1);
-*/
+
             for(int ii=0; ii<2; ii++) {
                 VuforiaTrackable trackable = allTrackables.get(0);
                 sleep(500);
