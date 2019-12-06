@@ -188,10 +188,10 @@ public class POVmode extends LinearOpMode {
             double mX = gamepad1.left_stick_x;
 
             if(gamepad1.left_trigger > 0){
-                driveMultiple = 0.5;
+                driveMultiple = 1;
             }
             else{
-                driveMultiple = 1;
+                driveMultiple = 0.5;
             }
 
             double powerflD = (mY * -driveMultiple);
@@ -396,10 +396,10 @@ public class POVmode extends LinearOpMode {
 
                 if ((armRotate > 0) && (armLimitTouchBack.getState() == true)) {                                // right stick y to rotate arm up
                     armRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    armRotateMotor.setPower(1);
+                    armRotateMotor.setPower(armRotate);
                 } else if ((armRotate < 0) && (armLimitTouchFront.getState() == true)) {                           // right stick y to rotate arm down
                     armRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    armRotateMotor.setPower(-1);
+                    armRotateMotor.setPower(armRotate);
                 }
                 else {
                     armRotateMotor.setPower(0.0);

@@ -94,20 +94,17 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
 
         double voltage = this.hardwareMap.voltageSensor.iterator().next().getVoltage();
         double timeMultiple = (-0.1*voltage) + 2.25;
-        moveForwardTime(0.5, false, 0.7*timeMultiple);
-        moveSideTime(0.5, false, 3*timeMultiple);
-        moveStop();
+        moveForwardInches(0.5, false, 10);
+        moveSideInches(0.5, false, 32);
         sleep(500);
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
         sleep(1000);
-        moveSideTime(0.5, true, 1*timeMultiple);
-        moveSideTime(1, true, 2.2);
+        moveSideInches(0.5, true, 56);
         sleep(500);
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
-        moveForwardTime(0.5, true, 2*timeMultiple);
-        moveSideTime(0.5, false, 0.5*timeMultiple);
-        moveForwardTime(0.5, false, 1.25*timeMultiple);
-        moveStop();
+        moveForwardInches(0.5, true, 26);
+        moveSideInches(0.5, false, 18);
+        moveForwardInches(0.5, false, 10);
         armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         int ticsPerDegree = (int) ((1425.2 *24)/360);
         int degrees = 132;
@@ -118,9 +115,9 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
         armRotateMotor.setPower(1);
         sleep(4000);
 
-        moveForwardTime(0.5, true, 0.5*timeMultiple);
-        moveSideTime(0.5, true, 0.4*timeMultiple);
-        moveForwardTime(0.5, true, 1.2*timeMultiple);
+        moveForwardInches(0.5, true, 3);
+        moveSideInches(0.5, true, 20);
+        moveForwardInches(0.5, true, 24);
     }
 
 
@@ -231,5 +228,189 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
         } else {
             return -1 * inputval;
         }
+    }
+    public double moveForwardInches(double wheelPower, boolean direction, double inches) {
+
+        // direction true => forward
+        // direction false => backward
+        int ticsPerMotor = 1120;
+        double circumference = 12.125;
+        double ticsPerInch = ticsPerMotor / circumference;
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 50;
+        double poweruse;
+        int starttics = frontLeftDriveMotor.getCurrentPosition();
+
+        if (direction) {
+            FLtarget = (int)(ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(ticsPerInch *  inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        } else {
+            FLtarget = (int)(-ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(-ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(-ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(-ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        }
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())) {
+            poweruse = wheelPower + (((wheelPower - 0.5)/(starttics-FLtarget))* ((frontLeftDriveMotor.getCurrentPosition()-starttics)));
+
+            frontLeftDriveMotor.setPower(poweruse);
+            frontRightDriveMotor.setPower(poweruse);
+            backLeftDriveMotor.setPower(poweruse);
+            backRightDriveMotor.setPower(poweruse);
+            sleep(50);
+        }
+        sleep(100);
+
+        return (0);
+    }
+    public double moveSideInches(double wheelPower, boolean direction, double inches) {
+
+        // direction true => right
+        // direction false => left
+        double ticsPerMotor = 1120;
+        double circumference = 12.125;
+        double ticsPerInch = ticsPerMotor / circumference;
+
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 50;
+        double poweruse;
+        int starttics = frontLeftDriveMotor.getCurrentPosition();
+
+        if (direction) {
+            double sideMultiple = 1.2;
+            FLtarget = (int)(ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(-ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(-ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        } else {
+            double sideMultiple = 1.2;
+
+            FLtarget = (int)(-ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget =(int)(ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int)(ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int)(-ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        }
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())) {
+            poweruse = wheelPower + (((wheelPower - 0.5)/(starttics-FLtarget))* ((frontLeftDriveMotor.getCurrentPosition()-starttics)));
+
+            frontLeftDriveMotor.setPower(poweruse);
+            frontRightDriveMotor.setPower(poweruse);
+            backLeftDriveMotor.setPower(poweruse);
+            backRightDriveMotor.setPower(poweruse);
+            sleep(50);
+        }
+        sleep(100);
+
+        return (0);
+    }
+    public double moveTurnDegrees(double wheelPower, boolean direction, double degrees) {
+
+        // direction true => right
+        // direction false => left
+
+        double ticsPerMotor = 1120;
+        double degreesPerRotation = 48;
+        double ticsToMove = (degrees * ticsPerMotor) / degreesPerRotation;
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 50;
+
+        if (direction) {
+            FLtarget = (int)(-ticsToMove) + frontLeftDriveMotor.getCurrentPosition();
+            FRtarget =(int)(ticsToMove)+ frontRightDriveMotor.getCurrentPosition();
+            BLtarget = (int)(-ticsToMove) + backLeftDriveMotor.getCurrentPosition();
+            BRtarget = (int)(ticsToMove)+ backRightDriveMotor.getCurrentPosition();
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        } else {
+            FLtarget = (int)(ticsToMove) + frontLeftDriveMotor.getCurrentPosition();
+            FRtarget =(int)(-ticsToMove)+ frontRightDriveMotor.getCurrentPosition();
+            BLtarget = (int)(ticsToMove) + backLeftDriveMotor.getCurrentPosition();
+            BRtarget = (int)(-ticsToMove)+ backRightDriveMotor.getCurrentPosition();
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        }
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())){
+            frontLeftDriveMotor.setPower(wheelPower);
+            frontRightDriveMotor.setPower(wheelPower);
+            backLeftDriveMotor.setPower(wheelPower);
+            backRightDriveMotor.setPower(wheelPower);
+            sleep(50);
+        }
+        sleep(100);
+
+        return (0);
     }
 }

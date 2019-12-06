@@ -336,12 +336,12 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             int ticsPerDegree = (int) ((1425.2 *24)/360);
             int degrees = 132;
 
-            armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+/*            armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             armRotateMotor.setDirection(DcMotorSimple.Direction.FORWARD);
             armRotateMotor.setTargetPosition(ticsPerDegree * degrees);
             armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             armRotateMotor.setPower(1);
-
+*/
             for(int ii=0; ii<2; ii++) {
                 VuforiaTrackable trackable = allTrackables.get(0);
                 sleep(500);
@@ -381,12 +381,12 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                 sleep(500);
                 moveForwardInches(forwardPowerFast, true, 60);
                 moveTurnDegrees(turnPower, true, 90);
-                moveSideInches(sidePowerFast, false, 22);
+                moveSideInches(sidePowerFast, false, 23);
                 moveForwardInches(0.4, false, 11);
                 stoneServo.setPosition(STONE_PICKER_OPEN);
                 sleep(1000);
                 moveForwardInches(forwardPowerSlow, true, 11);
-                moveSideInches(sidePowerFast, true, 22);
+                moveSideInches(sidePowerFast, true, 23);
                 moveTurnDegrees(turnPower, false, 90);
                 moveForwardInches(forwardPowerFast, false, 60);
                 stoneServo.setPosition(STONE_PICKER_CLOSED);
@@ -421,12 +421,12 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                     sleep(500);
                     moveForwardInches(forwardPowerFast, true, 68);
                     moveTurnDegrees(turnPower, true, 90);
-                    moveSideInches(sidePowerFast, false, 22);
-                    moveForwardInches(0.4, false, 11);
+                    moveSideInches(sidePowerFast, false, 23);
+                    moveForwardInches(0.4, false, 12);
                     stoneServo.setPosition(STONE_PICKER_OPEN);
                     sleep(1000);
                     moveForwardInches(forwardPowerSlow, true, 11);
-                    moveSideInches(sidePowerFast, true, 22);
+                    moveSideInches(sidePowerFast, true, 23);
                     moveTurnDegrees(turnPower, false, 90);
                     moveForwardInches(forwardPowerFast, false, 68);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
@@ -440,7 +440,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                     sleep(1000);
                     moveForwardInches(forwardPowerSlow, true, 7);
                     moveTurnDegrees(turnPower, false, 90);
-                    moveForwardInches(forwardPowerFast, false, 72);
+                    moveForwardInches(forwardPowerFast, false, 73);
                     stoneServo.setPosition(STONE_PICKER_CLOSED);
                     sleep(500);
                     moveForwardInches(forwardPowerFast, true, 54);
@@ -619,7 +619,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         int FRtarget;
         int BLtarget;
         int BRtarget;
-        int ticksTol = 50;
+        int ticksTol = 25;
         double poweruse;
         int starttics = frontLeftDriveMotor.getCurrentPosition();
 
@@ -655,7 +655,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-         }
+        }
         while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())) {
             poweruse = wheelPower + (((wheelPower - 0.5)/(starttics-FLtarget))* ((frontLeftDriveMotor.getCurrentPosition()-starttics)));
 
@@ -663,7 +663,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             frontRightDriveMotor.setPower(poweruse);
             backLeftDriveMotor.setPower(poweruse);
             backRightDriveMotor.setPower(poweruse);
-            sleep(50);
+            sleep(25);
         }
         sleep(100);
 
@@ -681,12 +681,12 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         int FRtarget;
         int BLtarget;
         int BRtarget;
-        int ticksTol = 50;
+        int ticksTol = 25;
         double poweruse;
         int starttics = frontLeftDriveMotor.getCurrentPosition();
 
         if (direction) {
-            double sideMultiple = 1.3;
+            double sideMultiple = 1.2;
             FLtarget = (int)(ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
             FRtarget =(int)(-ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
             BLtarget = (int)(-ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
@@ -703,7 +703,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         } else {
-            double sideMultiple = 1.3;
+            double sideMultiple = 1.2;
 
             FLtarget = (int)(-ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
             FRtarget =(int)(ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
@@ -728,9 +728,9 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             frontRightDriveMotor.setPower(poweruse);
             backLeftDriveMotor.setPower(poweruse);
             backRightDriveMotor.setPower(poweruse);
-            sleep(50);
+            sleep(25);
         }
-        sleep(100);
+        sleep(200);
 
         return (0);
     }
@@ -746,7 +746,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         int FRtarget;
         int BLtarget;
         int BRtarget;
-        int ticksTol = 50;
+        int ticksTol = 25;
 
         if (direction) {
             FLtarget = (int)(-ticsToMove) + frontLeftDriveMotor.getCurrentPosition();
@@ -786,7 +786,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             frontRightDriveMotor.setPower(wheelPower);
             backLeftDriveMotor.setPower(wheelPower);
             backRightDriveMotor.setPower(wheelPower);
-            sleep(50);
+            sleep(25);
         }
         sleep(100);
 
