@@ -43,7 +43,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 @Autonomous(name="TestEncoders", group ="Concept")
-//@Disabled
+@Disabled
 public class TestEncoders extends LinearOpMode {
 
     private DcMotor frontLeftDriveMotor = null;

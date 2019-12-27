@@ -1,4 +1,4 @@
-/* Copyright (c) 2019 FIRST. All rights reserved.
+/* Copyright (c) 2017 FIRST. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted (subject to the limitations in the disclaimer below) provided that
@@ -29,29 +29,37 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
@@ -60,62 +68,30 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
 /**
- * This 2019-2020 OpMode illustrates the basics of using the Vuforia localizer to determine
- * positioning and orientation of robot on the SKYSTONE FTC field.
- * The code is structured as a LinearOpMode
- *
- * When images are located, Vuforia is able to determine the position and orientation of the
- * image relative to the camera.  This sample code then combines that information with a
- * knowledge of where the target images are on the field, to determine the location of the camera.
- *
- * From the Audience perspective, the Red Alliance station is on the right and the
- * Blue Alliance Station is on the left.
-
- * Eight perimeter targets are distributed evenly around the four perimeter walls
- * Four Bridge targets are located on the bridge uprights.
- * Refer to the Field Setup manual for more specific location details
- *
- * A final calculation then uses the location of the camera on the robot to determine the
- * robot's location and orientation on the field.
- *
- * @see VuforiaLocalizer
- * @see VuforiaTrackableDefaultListener
- * see  skystone/doc/tutorial/FTC_FieldCoordinateSystemDefinition.pdf
+ * {@link AutoBlueSkystoneParkFar} gives a short demo on how to use the BNO055 Inertial Motion Unit (IMU) from AdaFruit.
  *
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list.
+ * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  *
- * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
- * is explained below.
+ * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
  */
-
-@Autonomous(name="B-SS-Far", group ="Concept")
-//@Disabled
+@Autonomous(name = "B-SS-Far", group = "Concept")
+//@Disabled                            // Comment this out to add to the opmode list
 public class AutoBlueSkystoneParkFar extends LinearOpMode {
+    //----------------------------------------------------------------------------------------------
+    // State
+    //----------------------------------------------------------------------------------------------
 
-    // IMPORTANT: If you are using a USB WebCam, you must select CAMERA_CHOICE = BACK; and PHONE_IS_PORTRAIT = false;
+    private DistanceSensor sensorBlue;
+
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
-    private static final boolean PHONE_IS_PORTRAIT = false  ;
+    private static final boolean PHONE_IS_PORTRAIT = false;
 
-    /*
-     * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
-     * 'parameters.vuforiaLicenseKey' is initialized is for illustration only, and will not function.
-     * A Vuforia 'Development' license key, can be obtained free of charge from the Vuforia developer
-     * web site at https://developer.vuforia.com/license-manager.
-     *
-     * Vuforia license keys are always 380 characters long, and look as if they contain mostly
-     * random data. As an example, here is a example of a fragment of a valid key:
-     *      ... yIgIzTqZ4mWjk9wd3cZO9T1axEqzuhxoGlfOOI2dRzKS4T0hQ8kT ...
-     * Once you've obtained a license key, copy the string from the Vuforia web site
-     * and paste it in to your code on the next line, between the double quotes.
-     */
     private static final String VUFORIA_KEY =
             "AQGs+8X/////AAABmUlgVbItAkXMhUiMsKHBxsOOsOSky4xQM7QN/1ugM+DkgNZQYexbfsQkK4+aDQexx9sWXZr+TPwDLQ8aXvJ3cru61Y/17wBrCRs2hGeLOENx0hRyY+sTnH2PJSXN+qaKSggoE67PpO33KHKdUD48x9T/dzeg9Rtg2PVEQBezKKa1SMq5AJGXTLI2YnjsXPJ/Uk+9TNcXfaCqxWAgFXaT9bLsyaXRLdaudyEq+qG6d73EOsV9RI2LY/RJGFPhL34Cs8WoRLtuXl8uo/mfvaLsaZrj0w6mxF+9hiYPEXrKwCXuFxc0pSXomDaWTE+NyetotMlsYNRJOccVhtUerhZ13nXfxUk7mECSNod/YBYiVrSp";
 
-    // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
-    // We will define some constants and conversions here
-    private static final float mmPerInch        = 25.4f;
-    private static final float mmTargetHeight   = (6) * mmPerInch;          // the height of the center of the target image above the floor
+    private static final float mmPerInch = 25.4f;
+    private static final float mmTargetHeight = (6) * mmPerInch;
 
     // Constant for Stone Target
     private static final float stoneZ = 2.00f * mmPerInch;
@@ -129,13 +105,16 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
 
     // Constants for perimeter targets
     private static final float halfField = 72 * mmPerInch;
-    private static final float quadField  = 36 * mmPerInch;
+    private static final float quadField = 36 * mmPerInch;
 
-    // Class Members
     private OpenGLMatrix lastLocation = null;
     private VuforiaLocalizer vuforia = null;
+
     final private double FINGERS_OPEN = 0.05;               // open claw
     final private double FINGERS_CLOSED = 0.5;              //close claw
+    final private double GAIN_P = 0.02;
+    final private double GAIN_I = 0.0009;
+    final private double GAIN_D = 0.00009;
 
     /**
      * This is the webcam we are to use. As with other hardware devices such as motors and
@@ -143,48 +122,68 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
      */
     WebcamName webcamName = null;
 
+    // The IMU sensor object
+    BNO055IMU imu;
+    private ElapsedTime runtime = new ElapsedTime();
     private boolean targetVisible = false;
-    private float phoneXRotate    = 0;
-    private float phoneYRotate    = 0;
-    private float phoneZRotate    = 0;
+    private float phoneXRotate = 0;
+    private float phoneYRotate = 0;
+    private float phoneZRotate = 0;
     private DcMotor frontLeftDriveMotor = null;
     private DcMotor frontRightDriveMotor = null;
     private DcMotor backLeftDriveMotor = null;
     private DcMotor backRightDriveMotor = null;
     private DcMotor armRotateMotor = null;
     private DcMotor armExtendMotor = null;
-    private Servo stoneServo = null;                    // place holder
+    private Servo stoneServoRed = null;                    // place holder
+    private Servo stoneServoBlue = null;
     private Servo clawWristServo = null;
     private Servo clawFingersServo = null;
     private Servo foundationGrabberServo = null;
     private DigitalChannel armLimitTouchFront = null;
     private DigitalChannel armLimitTouchBack = null;
     private Servo capstoneServo = null;
-    private ElapsedTime runtime = new ElapsedTime();
-    final private double STONE_PICKER_CLOSED = 1;
-    final private double STONE_PICKER_OPEN = 0;
+    private Servo deliveryServoLeft = null;
+    private Servo deliveryServoRight = null;
+    final private double STONE_PICKER_CLOSED_RED = 1;
+    final private double STONE_PICKER_CLOSED_BLUE = 0.1;
+    final private double STONE_PICKER_OPEN_RED = 0;
+    final private double STONE_PICKER_OPEN_BLUE = 1;
     final private double CAPSTONE_NOT_DROPPED = 1;
     final private double CAPSTONE_DROPPED = 0;
+    final private double WRIST_TURN_HORIZONTAL = 0.5;       // wrist turn for horizontal block
+    final private double WRIST_TURN_VERTICAL = 0.05;         // wrist turn for vertical block
+    final private double FOUNDATION_GRABBER_DOWN = 0.40;    // grabber down
+    final private double FOUNDATION_GRABBER_UP = 1;         // grabber up
+    final private double DELIVERY_SERVO_IN = 0.5;
+    // State used for updating telemetry
+    Orientation angles;
+    Acceleration gravity;
 
+    //----------------------------------------------------------------------------------------------
+    // Main logic
+    //----------------------------------------------------------------------------------------------
 
-    @Override public void runOpMode() {
-        /*
-         * Retrieve the camera we are to use.
-         */
+    @Override
+    public void runOpMode() {
         webcamName = hardwareMap.get(WebcamName.class, "Webcam1");
         // game controller #1
         frontLeftDriveMotor = hardwareMap.get(DcMotor.class, "front_left_drive");
         frontRightDriveMotor = hardwareMap.get(DcMotor.class, "front_right_drive");
         backLeftDriveMotor = hardwareMap.get(DcMotor.class, "back_left_drive");
         backRightDriveMotor = hardwareMap.get(DcMotor.class, "back_right_drive");
+        sensorBlue = hardwareMap.get(DistanceSensor.class, "distance_blue");
 
         // game controller #2
         armRotateMotor = hardwareMap.get(DcMotor.class, "arm_rotate_motor");
         armExtendMotor = hardwareMap.get(DcMotor.class, "arm_extend_motor");
-        stoneServo = hardwareMap.get(Servo.class, "stone_picker");
+        stoneServoRed = hardwareMap.get(Servo.class, "stone_picker_red");
+        stoneServoBlue = hardwareMap.get(Servo.class, "stone_picker_blue");
         clawWristServo = hardwareMap.get(Servo.class, "claw_wrist");
         clawFingersServo = hardwareMap.get(Servo.class, "claw_fingers");
         foundationGrabberServo = hardwareMap.get(Servo.class, "foundation_grabber");
+        deliveryServoLeft = hardwareMap.get(Servo.class, "delivery_servo_left");
+        deliveryServoRight = hardwareMap.get(Servo.class, "delivery_servo_right");
 
         armLimitTouchFront = hardwareMap.get(DigitalChannel.class, "arm_limit_touch_front");
         armLimitTouchBack = hardwareMap.get(DigitalChannel.class, "arm_limit_touch_back");
@@ -201,31 +200,24 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
 
         capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
+        stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
+        stoneServoRed.setPosition(STONE_PICKER_CLOSED_RED);
+        foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
+        deliveryServoLeft.setPosition(DELIVERY_SERVO_IN);
+        deliveryServoRight.setPosition(DELIVERY_SERVO_IN);
 
-        frontLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
-         * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
-         */
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        VuforiaLocalizer.Parameters parametersV = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
-        // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parametersV.vuforiaLicenseKey = VUFORIA_KEY;
 
         /**
          * We also indicate which camera on the RC we wish to use.
          */
-        parameters.cameraName = webcamName;
+        parametersV.cameraName = webcamName;
 
         //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+        vuforia = ClassFactory.getInstance().createVuforia(parametersV);
 
         // Load the data sets for the trackable objects. These particular data
         // sets are stored in the 'assets' part of our application.
@@ -238,27 +230,17 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables.addAll(targetsSkyStone);
 
-        /**
-         * In order for localization to work, we need to tell the system where each target is on the field, and
-         * where the phone resides on the robot.  These specifications are in the form of <em>transformation matrices.</em>
-         * Transformation matrices are a central, important concept in the math here involved in localization.
-         * See <a href="https://en.wikipedia.org/wiki/Transformation_matrix">Transformation Matrix</a>
-         * for detailed information. Commonly, you'll encounter transformation matrices as instances
-         * of the {@link OpenGLMatrix} class.
-         *
-         * If you are standing in the Red Alliance Station looking towards the center of the field,
-         *     - The X axis runs from your left to the right. (positive from the center to the right)
-         *     - The Y axis runs from the Red Alliance Station towards the other side of the field
-         *       where the Blue Alliance Station is. (Positive is from the center, towards the BlueAlliance station)
-         *     - The Z axis runs from the floor, upwards towards the ceiling.  (Positive is above the floor)
-         *
-         * Before being transformed, each target image is conceptually located at the origin of the field's
-         *  coordinate system (the center of the field), facing up.
-         */
+        // Set up the parameters with which we will use our IMU. Note that integration
+        // algorithm here just reports accelerations to the logcat log; it doesn't actually
+        // provide positional information.
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
-        // Set the position of the Stone Target.  Since it's not fixed in position, assume it's at the field origin.
-        // Rotated it to to face forward, and raised it to sit on the ground correctly.
-        // This can be used for generic target-centric approach algorithms
         stoneTarget.setLocation(OpenGLMatrix
                 .translation(0, 0, stoneZ)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
@@ -287,14 +269,14 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
 
         // Rotate the phone vertical about the X axis if it's in portrait mode
         if (PHONE_IS_PORTRAIT) {
-            phoneXRotate = 90 ;
+            phoneXRotate = 90;
         }
 
         // Next, translate the camera lens to where it is on the robot.
         // In this example, it is centered (left to right), but forward of the middle of the robot, and above ground level.
-        final float CAMERA_FORWARD_DISPLACEMENT  = 4.0f * mmPerInch;   // eg: Camera is 4 Inches in front of robot-center
+        final float CAMERA_FORWARD_DISPLACEMENT = 4.0f * mmPerInch;   // eg: Camera is 4 Inches in front of robot-center
         final float CAMERA_VERTICAL_DISPLACEMENT = 8.0f * mmPerInch;   // eg: Camera is 8 Inches above ground
-        final float CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
+        final float CAMERA_LEFT_DISPLACEMENT = 0;     // eg: Camera is ON the robot's center line
 
         OpenGLMatrix robotFromCamera = OpenGLMatrix
                 .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
@@ -302,47 +284,39 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
 
         /**  Let all the trackable listeners know where the phone is.  */
         for (VuforiaTrackable trackable : allTrackables) {
-            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
+            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parametersV.cameraDirection);
         }
         clawFingersServo.setPosition(FINGERS_OPEN);
+        clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
 
-        // WARNING:
-        // In this sample, we do not wait for PLAY to be pressed.  Target Tracking is started immediately when INIT is pressed.
-        // This sequence is used to enable the new remote DS Camera Preview feature to be used with this sample.
-        // CONSEQUENTLY do not put any driving commands in this loop.
-        // To restore the normal opmode structure, just un-comment the following line:
 
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+
+        // Set up our telemetry dashboard
+        composeTelemetry();
+
+        // Wait until we're told to go
         waitForStart();
         runtime.reset();
 
-        // Note: To use the remote camera preview:
-        // AFTER you hit Init on the Driver Station, use the "options menu" to select "Camera Stream"
-        // Tap the preview window to receive a fresh image.
-
         targetsSkyStone.activate();
-        if(opModeIsActive()) {
-            double voltage = this.hardwareMap.voltageSensor.iterator().next().getVoltage();
-            double timeMultiple = (-0.1*voltage) + 2.25;
-            double forwardPowerSlow = 0.5;
-            double sidePowerSlow = 0.5;
-            double forwardPowerFast = 0.9;
-            double sidePowerFast = 0.6;
-            double turnPower = 0.5;
 
-            // check all the trackable targets to see which one (if any) is visible.
-            moveForwardInches(forwardPowerSlow, false, 16);
-            targetVisible = false;
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        gravity = imu.getGravity();
 
-            int ticsPerDegree = (int) ((1425.2 *24)/360);
-            int degrees = 132;
+        // Start the logging of measured acceleration
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
 
-            armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            armRotateMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-            armRotateMotor.setTargetPosition(ticsPerDegree * degrees);
-            armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            armRotateMotor.setPower(1);
-
-            for(int ii=0; ii<2; ii++) {
+        // Loop and update the dashboard
+        if (opModeIsActive()) {
+            double startAngle = angles.firstAngle;
+            //0.02, 0.0009, 0.00009
+            PIDstraightInches(GAIN_P,GAIN_I,GAIN_D, 0.5, -1, 18, startAngle);
+            for (int ii = 0; ii < 2; ii++) {
                 VuforiaTrackable trackable = allTrackables.get(0);
                 sleep(500);
                 if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
@@ -368,35 +342,40 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                 // express the rotation of the robot in degrees.
                 Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
                 telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
-                double Ypos = translation.get(1)/mmPerInch;
-                telemetry.addData("Ypos: ",absolute(Ypos));
+                double Ypos = translation.get(1) / mmPerInch;
+                telemetry.addData("Ypos: ", absolute(Ypos));
                 telemetry.update();
-                moveForwardInches(forwardPowerSlow, false, 17);
-                stoneServo.setPosition(STONE_PICKER_OPEN);
-                sleep(1000);
-                moveForwardInches(forwardPowerSlow, true, 7);
-                moveTurnDegrees(turnPower, false, 90);
-                moveForwardInches(forwardPowerFast, false, 60);
-                stoneServo.setPosition(STONE_PICKER_CLOSED);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 5.5, startAngle);
+                double blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
                 sleep(500);
-                moveForwardInches(forwardPowerFast, true, 60);
-                moveTurnDegrees(turnPower, true, 90);
-                moveSideInches(sidePowerFast, false, 23);
-                moveForwardInches(0.4, false, 11);
-                stoneServo.setPosition(STONE_PICKER_OPEN);
-                sleep(1000);
-                moveForwardInches(forwardPowerSlow, true, 11);
-                moveSideInches(sidePowerFast, true, 23);
-                moveTurnDegrees(turnPower, false, 90);
-                moveForwardInches(forwardPowerFast, false, 60);
-                stoneServo.setPosition(STONE_PICKER_CLOSED);
+                stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
                 sleep(500);
-                moveForwardInches(forwardPowerFast, true, 28);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 27, startAngle);
+                sleep(500);
+                stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
+                sleep(500);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 30, startAngle);
+                moveSideInches(0.75, false, 52);
+                sleep(500);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 17, startAngle);
+                blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
+                sleep(500);
+                stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
+                sleep(500);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 49, startAngle);
+                sleep(500);
+                stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
+                sleep(500);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 14, startAngle);
             }else{
-                //Second stone
-                moveSideInches(sidePowerSlow, false, 8);
-                targetVisible = false;
-                for(int ii=0; ii<2; ii++) {
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 8, startAngle);
+                for (int ii = 0; ii < 2; ii++) {
                     VuforiaTrackable trackable = allTrackables.get(0);
                     sleep(500);
                     if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
@@ -410,330 +389,609 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                         }
                     }
                 }
-                if (targetVisible){
-                    moveForwardInches(forwardPowerSlow, false, 17);
-                    stoneServo.setPosition(STONE_PICKER_OPEN);
-                    sleep(1000);
-                    moveForwardInches(forwardPowerSlow, true, 7);
-                    moveTurnDegrees(turnPower, false, 90);
-                    moveForwardInches(forwardPowerFast, false, 68);
-                    stoneServo.setPosition(STONE_PICKER_CLOSED);
+                telemetry.addData("Visible or not? ", targetVisible);
+                if(targetVisible){
+                    //Second Stone
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 5.5, startAngle);
+                    double blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
                     sleep(500);
-                    moveForwardInches(forwardPowerFast, true, 68);
-                    moveTurnDegrees(turnPower, true, 90);
-                    moveSideInches(sidePowerFast, false, 23);
-                    moveForwardInches(0.4, false, 12);
-                    stoneServo.setPosition(STONE_PICKER_OPEN);
-                    sleep(1000);
-                    moveForwardInches(forwardPowerSlow, true, 11);
-                    moveSideInches(sidePowerFast, true, 23);
-                    moveTurnDegrees(turnPower, false, 90);
-                    moveForwardInches(forwardPowerFast, false, 68);
-                    stoneServo.setPosition(STONE_PICKER_CLOSED);
+                    stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
                     sleep(500);
-                    moveForwardInches(forwardPowerFast, true, 28);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 35, startAngle);
+                    sleep(500);
+                    stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
+                    sleep(500);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 30, startAngle);
+                    moveSideInches(0.75, false, 52);
+                    sleep(500);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
+                    blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
+                    sleep(500);
+                    stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
+                    sleep(500);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 56, startAngle);                    sleep(500);
+                    stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
+                    sleep(500);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 14, startAngle);
                 }else{
-                    //Third stone
-                    moveSideInches(sidePowerSlow, false, 8);
-                    moveForwardInches(0.4, false, 17);
-                    stoneServo.setPosition(STONE_PICKER_OPEN);
-                    sleep(1000);
-                    moveForwardInches(forwardPowerSlow, true, 7);
-                    moveTurnDegrees(turnPower, false, 90);
-                    moveForwardInches(forwardPowerFast, false, 73);
-                    stoneServo.setPosition(STONE_PICKER_CLOSED);
+                    //Third Stone
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 4, startAngle);
+                    double blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
                     sleep(500);
-                    moveForwardInches(forwardPowerFast, true, 54);
-                    moveTurnDegrees(turnPower, true, 90);
-                    moveForwardInches(0.4, false, 11);
-                    stoneServo.setPosition(STONE_PICKER_OPEN);
-                    sleep(1000);
-                    moveForwardInches(forwardPowerSlow, true, 11);
-                    moveTurnDegrees(turnPower, false, 90);
-                    moveForwardInches(forwardPowerFast, false, 54);
-                    stoneServo.setPosition(STONE_PICKER_CLOSED);
+                    stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
                     sleep(500);
-                    moveForwardInches(forwardPowerFast, true, 24);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 43, startAngle);
+                    sleep(500);
+                    stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
+                    sleep(500);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 30, startAngle);
+                    moveSideInches(0.75, false, 52);
+                    sleep(500);
+                    blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
+                    sleep(500);
+                    stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
+                    sleep(500);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 64, startAngle);
+                    sleep(500);
+                    stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
+                    sleep(500);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 14, startAngle);
                 }
             }
 
-            telemetry.addData("Visible Target", "none");
+
         }
-        telemetry.update();
 
-        // Disable Tracking when we are done;
-        targetsSkyStone.deactivate();
     }
+        //----------------------------------------------------------------------------------------------
+        // Telemetry Configuration
+        //----------------------------------------------------------------------------------------------
 
+        void composeTelemetry () {
 
-    public double moveForwardTime(double wheelPower, boolean direction, double movetime) {
-        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // direction true => forward
-        // direction false => backward
-        double timeNow = getRuntime();
-        // use a factor for left wheel because the robot gets pulled to the left due to weight balance
-        frontRightDriveMotor.setPower(0);
-        frontLeftDriveMotor.setPower(0);
-        backRightDriveMotor.setPower(0);
-        backLeftDriveMotor.setPower(0);
+            // At the beginning of each telemetry update, grab a bunch of data
+            // from the IMU that we will then display in separate lines.
+            telemetry.addAction(new Runnable() {
+                @Override
+                public void run() {
+                    // Acquiring the angles is relatively expensive; we don't want
+                    // to do that in each of the three items that need that info, as that's
+                    // three times the necessary expense.
+                    angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                    gravity = imu.getGravity();
+                }
+            });
 
-        if (direction) {
-            timeNow = getRuntime();
-            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
+            telemetry.addLine()
+                    .addData("status", new Func<String>() {
+                        @Override
+                        public String value() {
+                            return imu.getSystemStatus().toShortString();
+                        }
+                    })
+                    .addData("calib", new Func<String>() {
+                        @Override
+                        public String value() {
+                            return imu.getCalibrationStatus().toString();
+                        }
+                    });
 
-                frontLeftDriveMotor.setPower(wheelPower);
-                frontRightDriveMotor.setPower(wheelPower);
-                backLeftDriveMotor.setPower(wheelPower);
-                backRightDriveMotor.setPower(wheelPower);
-            }
+            telemetry.addLine()
+                    .addData("heading", new Func<String>() {
+                        @Override
+                        public String value() {
+                            return formatAngle(angles.angleUnit, angles.firstAngle);
+                        }
+                    })
+                    .addData("roll", new Func<String>() {
+                        @Override
+                        public String value() {
+                            return formatAngle(angles.angleUnit, angles.secondAngle);
+                        }
+                    })
+                    .addData("pitch", new Func<String>() {
+                        @Override
+                        public String value() {
+                            return formatAngle(angles.angleUnit, angles.thirdAngle);
+                        }
+                    });
 
-            frontLeftDriveMotor.setPower(0);
-            frontRightDriveMotor.setPower(0);
-            backLeftDriveMotor.setPower(0);
-            backRightDriveMotor.setPower(0);
-        } else {
-            timeNow = getRuntime();
-            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
+            telemetry.addLine()
+                    .addData("grvty", new Func<String>() {
+                        @Override
+                        public String value() {
+                            return gravity.toString();
+                        }
+                    })
+                    .addData("mag", new Func<String>() {
+                        @Override
+                        public String value() {
+                            return String.format(Locale.getDefault(), "%.3f",
+                                    Math.sqrt(gravity.xAccel * gravity.xAccel
+                                            + gravity.yAccel * gravity.yAccel
+                                            + gravity.zAccel * gravity.zAccel));
+                        }
+                    });
 
-                frontLeftDriveMotor.setPower(-wheelPower);
-                frontRightDriveMotor.setPower(-wheelPower);
-                backLeftDriveMotor.setPower(-wheelPower);
-                backRightDriveMotor.setPower(-wheelPower);
-            }
-
-            frontLeftDriveMotor.setPower(0);
-            frontRightDriveMotor.setPower(0);
-            backLeftDriveMotor.setPower(0);
-            backRightDriveMotor.setPower(0);
         }
-        return (0);
-    }
-    public double moveSideTime(double wheelPower, boolean direction, double movetime) {
-        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // direction true => right
-        // direction false => left
-        double timeNow = getRuntime();
-        // use a factor for left wheel because the robot gets pulled to the left due to weight balance
-        frontRightDriveMotor.setPower(0);
-        frontLeftDriveMotor.setPower(0);
-        backRightDriveMotor.setPower(0);
-        backLeftDriveMotor.setPower(0);
 
-        if (direction) {
-            timeNow = getRuntime();
-            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
+        //----------------------------------------------------------------------------------------------
+        // Formatting
+        //----------------------------------------------------------------------------------------------
 
-                frontLeftDriveMotor.setPower(wheelPower);
-                frontRightDriveMotor.setPower(-wheelPower);
-                backLeftDriveMotor.setPower(-wheelPower);
-                backRightDriveMotor.setPower(wheelPower);
-            }
-
-            frontLeftDriveMotor.setPower(0);
-            frontRightDriveMotor.setPower(0);
-            backLeftDriveMotor.setPower(0);
-            backRightDriveMotor.setPower(0);
-        } else {
-            timeNow = getRuntime();
-            while ((getRuntime() < timeNow + movetime) && (opModeIsActive())) {
-
-                frontLeftDriveMotor.setPower(-wheelPower);
-                frontRightDriveMotor.setPower(wheelPower);
-                backLeftDriveMotor.setPower(wheelPower);
-                backRightDriveMotor.setPower(-wheelPower);
-            }
-
-            frontLeftDriveMotor.setPower(0);
-            frontRightDriveMotor.setPower(0);
-            backLeftDriveMotor.setPower(0);
-            backRightDriveMotor.setPower(0);
+        String formatAngle (AngleUnit angleUnit,double angle){
+            return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
         }
-        return (0);
-    }
-    public double absolute(double inputval) {
-        if (inputval > 0) {
-            return inputval;
-        } else {
-            return -1 * inputval;
+
+        String formatDegrees ( double degrees){
+            return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
         }
-    }
-    public double turnTime(double wheelPower, boolean direction, double turntime) {
-        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // direction true => right
-        // direction false => left
-        double timeNow = getRuntime();
-        // use a factor for left wheel because the robot gets pulled to the left due to weight balance
-        frontRightDriveMotor.setPower(0);
-        frontLeftDriveMotor.setPower(0);
-        backRightDriveMotor.setPower(0);
-        backLeftDriveMotor.setPower(0);
 
-        if (direction) {
-            timeNow = getRuntime();
-            while ((getRuntime() < timeNow + turntime) && (opModeIsActive())) {
 
-                frontLeftDriveMotor.setPower(-wheelPower);
-                frontRightDriveMotor.setPower(wheelPower);
-                backLeftDriveMotor.setPower(-wheelPower);
-                backRightDriveMotor.setPower(wheelPower);
+        public void PIDstraightTime ( double gainP, double gainI, double gainD, double initSpeed,
+        double direction, double targetTime){
+            double timeLast = 0;
+            double reference1 = angles.firstAngle;
+            double Ilast = 0;
+            double errorlast = 0;
+            double P;
+            double I;
+            double D;
+            double dT;
+            double output;
+            double Kp = gainP;
+            double Ki = gainI;
+            double Kd = gainD;
+            double timeNow;
+            double poL;
+            double poR;
+            double error;
+            double anglenow;
+            double refTime = getRuntime();
+            double elapsedTime = 0;
+            long TIMESLEEP = 100;
+
+            while ((elapsedTime < targetTime) && opModeIsActive()) {
+
+                sleep(TIMESLEEP);
+
+                // calculate time
+                timeNow = getRuntime();
+                elapsedTime = timeNow - refTime;
+                dT = timeNow - timeLast;
+
+                // P
+                anglenow = angles.firstAngle;
+                error = anglenow - reference1;
+                P = error;
+                // I
+                I = Ilast + (error * dT);
+                // D
+                D = (error - errorlast) / dT;
+
+                output = ((Kp * P) + (Ki * I) + (Kd * D));
+
+                if (output < 0) {
+                    poL = -output;
+                    poR = output;
+                    if (poR < -0.8) {
+                        poR = -0.8;
+                    }
+                    if (poL > 0.8) {
+                        poL = 0.8;
+                    }
+                } else {
+                    poL = -output;
+                    poR = output;
+                    if (poL < -0.8) {
+                        poL = -0.8;
+                    }
+                    if (poR > 0.8) {
+                        poR = 0.8;
+                    }
+                }
+
+                frontLeftDriveMotor.setPower(-initSpeed * direction + poL);
+                frontRightDriveMotor.setPower(-initSpeed * direction + poR);
+                backLeftDriveMotor.setPower(-initSpeed * direction + poL);
+                backRightDriveMotor.setPower(-initSpeed * direction + poR);
+
+                Ilast = I;
+                errorlast = error;
+                timeLast = timeNow;
+
+                telemetry.addData("PoL: ", poL);
+                telemetry.addData("PoR: ", poR);
+                telemetry.addData("error: ", error);
+                telemetry.addData("output: ", output);
+                telemetry.addData("P: ", P);
+                telemetry.addData("I: ", I);
+                telemetry.addData("D: ", D);
+                telemetry.addData("Time that's passed: ", elapsedTime);
+                telemetry.update();
+
             }
 
-            frontLeftDriveMotor.setPower(0);
-            frontRightDriveMotor.setPower(0);
-            backLeftDriveMotor.setPower(0);
-            backRightDriveMotor.setPower(0);
-        } else {
-            timeNow = getRuntime();
-            while ((getRuntime() < timeNow + turntime) && (opModeIsActive())) {
+        }
 
-                frontLeftDriveMotor.setPower(wheelPower);
-                frontRightDriveMotor.setPower(-wheelPower);
-                backLeftDriveMotor.setPower(wheelPower);
-                backRightDriveMotor.setPower(-wheelPower);
+        public void PIDturn ( double gainP, double gainI, double gainD, double reference1,
+        double maxpower){
+            double timeLast = 0;
+            double Ilast = 0;
+            double errorlast = 0;
+            double P;
+            double I;
+            double D;
+            double dT;
+            double outputPID;
+            double outputPD;
+            double output;
+            double Kp = gainP;
+            double Ki = gainI;
+            double Kd = gainD;
+            double timeNow;
+            double poL;
+            double poR;
+            double error = reference1 - angles.firstAngle;
+            double anglenow;
+            double refTime = getRuntime();
+            double elapsedTime = 0;
+            long TIMESLEEP = 100;
+
+
+            while ((absolute(error) > 0.5) && opModeIsActive()) {
+
+                sleep(TIMESLEEP);
+
+                // calculate time
+                timeNow = getRuntime();
+                elapsedTime = timeNow - refTime;
+                dT = timeNow - timeLast;
+
+                // P
+                anglenow = angles.firstAngle;
+                error = anglenow - reference1;
+                P = error;
+                // I
+                I = Ilast + (error * dT);
+                // D
+                D = (error - errorlast) / dT;
+
+                outputPID = ((Kp * P) + (Ki * I) + (Kd * D));
+                outputPD = ((Kp * P) + (Kd * D));
+                if (absolute(error) < 6.0) {
+                    output = outputPID;
+                } else {
+                    output = outputPD;
+                }
+
+                if (output < 0) {
+                    poL = -output;
+                    poR = output;
+                    if (poR < -maxpower) {
+                        poR = -maxpower;
+                    }
+                    if (poL > maxpower) {
+                        poL = maxpower;
+                    }
+                } else {
+                    poL = -output;
+                    poR = output;
+                    if (poL < -maxpower) {
+                        poL = -maxpower;
+                    }
+                    if (poR > maxpower) {
+                        poR = maxpower;
+                    }
+                }
+
+                frontLeftDriveMotor.setPower(poL);
+                frontRightDriveMotor.setPower(poR);
+                backLeftDriveMotor.setPower(poL);
+                backRightDriveMotor.setPower(poR);
+
+                Ilast = I;
+                errorlast = error;
+                timeLast = timeNow;
+
+                telemetry.addData("PoL: ", poL);
+                telemetry.addData("PoR: ", poR);
+                telemetry.addData("error: ", error);
+                telemetry.addData("output: ", output);
+                telemetry.addData("P: ", P);
+                telemetry.addData("I: ", I);
+                telemetry.addData("D: ", D);
+                telemetry.addData("Time that's passed: ", elapsedTime);
+                telemetry.update();
+
             }
 
-            frontLeftDriveMotor.setPower(0);
-            frontRightDriveMotor.setPower(0);
-            backLeftDriveMotor.setPower(0);
-            backRightDriveMotor.setPower(0);
         }
-        return (0);
-    }
-    public double moveForwardInches(double wheelPower, boolean direction, double inches) {
+        public void PIDsideTime ( double gainP, double gainI, double gainD, double initSpeed,
+        double direction, double targetTime){
+            double timeLast = 0;
+            double reference1 = angles.firstAngle;
+            double Ilast = 0;
+            double errorlast = 0;
+            double P;
+            double I;
+            double D;
+            double dT;
+            double output;
+            double Kp = gainP;
+            double Ki = gainI;
+            double Kd = gainD;
+            double timeNow;
+            double poL;
+            double poR;
+            double error;
+            double anglenow;
+            double refTime = getRuntime();
+            double elapsedTime = 0;
+            long TIMESLEEP = 100;
+            while ((elapsedTime < targetTime) && opModeIsActive()) {
 
-        // direction true => forward
-        // direction false => backward
-        int ticsPerMotor = 1120;
+                sleep(TIMESLEEP);
+
+                // calculate time
+                timeNow = getRuntime();
+                elapsedTime = timeNow - refTime;
+                dT = timeNow - timeLast;
+
+                // P
+                anglenow = angles.firstAngle;
+                error = anglenow - reference1;
+                P = error;
+                // I
+                I = Ilast + (error * dT);
+                // D
+                D = (error - errorlast) / dT;
+
+                output = ((Kp * P) + (Ki * I) + (Kd * D));
+
+                if (output < 0) {
+                    poL = -output;
+                    poR = output;
+                    if (poR < -0.8) {
+                        poR = -0.8;
+                    }
+                    if (poL > 0.8) {
+                        poL = 0.8;
+                    }
+                } else {
+                    poL = -output;
+                    poR = output;
+                    if (poL < -0.8) {
+                        poL = -0.8;
+                    }
+                    if (poR > 0.8) {
+                        poR = 0.8;
+                    }
+                }
+
+                frontLeftDriveMotor.setPower(-initSpeed * direction + poL);
+                frontRightDriveMotor.setPower(initSpeed * direction + poR);
+                backLeftDriveMotor.setPower(initSpeed * direction + poL);
+                backRightDriveMotor.setPower(-initSpeed * direction + poR);
+
+                Ilast = I;
+                errorlast = error;
+                timeLast = timeNow;
+
+                telemetry.addData("PoL: ", poL);
+                telemetry.addData("PoR: ", poR);
+                telemetry.addData("error: ", error);
+                telemetry.addData("output: ", output);
+                telemetry.addData("P: ", P);
+                telemetry.addData("I: ", I);
+                telemetry.addData("D: ", D);
+                telemetry.addData("Time that's passed: ", elapsedTime);
+                telemetry.update();
+
+            }
+        }
+    public void PIDstraightInches(double gainP, double gainI, double gainD, double initSpeed, int direction, double targetInches, double reference1) {
+        double timeLast = 0;
+        double Ilast = 0;
+        double errorlast = 0;
+        double P;
+        double I;
+        double D;
+        double dT;
+        double output;
+        double Kp = gainP;
+        double Ki = gainI;
+        double Kd = gainD;
+        double timeNow;
+        double poL;
+        double poR;
+        double error;
+        double anglenow;
+        double refTime = getRuntime();
+        double elapsedTime = 0;
+        long TIMESLEEP = 100;
+        int ticsPerMotor = (1120);
         double circumference = 12.125;
         double ticsPerInch = ticsPerMotor / circumference;
-        int FLtarget;
-        int FRtarget;
-        int BLtarget;
-        int BRtarget;
-        int ticksTol = 25;
-        double poweruse;
-        int starttics = frontLeftDriveMotor.getCurrentPosition();
+        double startPos = frontRightDriveMotor.getCurrentPosition();
 
-        if (direction) {
-            FLtarget = (int)(ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
-            FRtarget =(int)(ticsPerInch *  inches + frontRightDriveMotor.getCurrentPosition());
-            BLtarget = (int)(ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
-            BRtarget = (int)(ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+        int target = ((int)(targetInches * ticsPerInch));
 
-            frontLeftDriveMotor.setTargetPosition(FLtarget);
-            frontRightDriveMotor.setTargetPosition(FRtarget);
-            backLeftDriveMotor.setTargetPosition(BLtarget);
-            backRightDriveMotor.setTargetPosition(BRtarget);
+        frontRightDriveMotor.setTargetPosition(direction *(target)+ frontRightDriveMotor.getCurrentPosition());
+        frontLeftDriveMotor.setTargetPosition(direction *(target)+ frontLeftDriveMotor.getCurrentPosition());
+        backRightDriveMotor.setTargetPosition(direction *(target)+ backRightDriveMotor.getCurrentPosition());
+        backLeftDriveMotor.setTargetPosition(direction *(target)+ backLeftDriveMotor.getCurrentPosition());
 
-            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        } else {
-            FLtarget = (int)(-ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
-            FRtarget =(int)(-ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition());
-            BLtarget = (int)(-ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
-            BRtarget = (int)(-ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+        while ((absolute((frontRightDriveMotor.getCurrentPosition() - startPos)) < ((target)) - 50) && opModeIsActive()) {
 
-            frontLeftDriveMotor.setTargetPosition(FLtarget);
-            frontRightDriveMotor.setTargetPosition(FRtarget);
-            backLeftDriveMotor.setTargetPosition(BLtarget);
-            backRightDriveMotor.setTargetPosition(BRtarget);
+            sleep(TIMESLEEP);
 
-            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            // calculate time
+            timeNow = getRuntime();
+            elapsedTime = timeNow - refTime;
+            dT = timeNow - timeLast;
+
+            // P
+            anglenow = angles.firstAngle;
+            error = anglenow - reference1;
+            P = error;
+            // I
+            I = Ilast + (error * dT);
+            // D
+            D = (error - errorlast) / dT;
+
+            output = ((Kp * P) + (Ki * I) + (Kd * D));
+
+            poL = -output * direction;
+            poR = output * direction;
+            if (poR < -0.8) {
+                poR = -0.8;
+            }
+            if (poL > 0.8) {
+                poL = 0.8;
+            }
+            if (poL < -0.8) {
+                poL = -0.8;
+            }
+            if (poR > 0.8) {
+                poR = 0.8;
+            }
+
+            frontLeftDriveMotor.setPower(initSpeed + poL);
+            frontRightDriveMotor.setPower(initSpeed + poR);
+            backLeftDriveMotor.setPower(initSpeed + poL);
+            backRightDriveMotor.setPower(initSpeed + poR);
+
+            Ilast = I;
+            errorlast = error;
+            timeLast = timeNow;
+
+            telemetry.addData("PoL: ", poL);
+            telemetry.addData("PoR: ", poR);
+            telemetry.addData("error: ", error);
+            telemetry.addData("output: ", output);
+            telemetry.addData("P: ", P);
+            telemetry.addData("I: ", I);
+            telemetry.addData("D: ", D);
+            telemetry.addData("Time that's passed: ", elapsedTime);
+            telemetry.update();
 
         }
-        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())) {
-            poweruse = wheelPower + (((wheelPower - 0.5)/(starttics-FLtarget))* ((frontLeftDriveMotor.getCurrentPosition()-starttics)));
 
-            frontLeftDriveMotor.setPower(poweruse);
-            frontRightDriveMotor.setPower(poweruse);
-            backLeftDriveMotor.setPower(poweruse);
-            backRightDriveMotor.setPower(poweruse);
-            sleep(25);
-        }
-        sleep(100);
-
-        return (0);
     }
-    public double moveSideInches(double wheelPower, boolean direction, double inches) {
-
-        // direction true => right
-        // direction false => left
-        double ticsPerMotor = 1120;
+    public void PIDsideInches(double gainP, double gainI, double gainD, double initSpeed, int direction, double targetInches, double reference1) {
+        double timeLast = 0;
+        double Ilast = 0;
+        double errorlast = 0;
+        double P;
+        double I;
+        double D;
+        double dT;
+        double output;
+        double Kp = gainP;
+        double Ki = gainI;
+        double Kd = gainD;
+        double timeNow;
+        double poB;
+        double poF;
+        double error;
+        double anglenow;
+        double refTime = getRuntime();
+        double elapsedTime = 0;
+        long TIMESLEEP = 100;
+        int ticsPerMotor = (1120);
         double circumference = 12.125;
-        double ticsPerInch = ticsPerMotor / circumference;
+        double ticsMultiple = 1.2;
+        double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple);
+        double startPos = frontRightDriveMotor.getCurrentPosition();
 
-        int FLtarget;
-        int FRtarget;
-        int BLtarget;
-        int BRtarget;
-        int ticksTol = 25;
-        double poweruse;
-        int starttics = frontLeftDriveMotor.getCurrentPosition();
+        int target = ((int)(targetInches * ticsPerInch));
 
-        if (direction) {
-            double sideMultiple = 1.2;
-            FLtarget = (int)(ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
-            FRtarget =(int)(-ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
-            BLtarget = (int)(-ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
-            BRtarget = (int)(ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
+        frontRightDriveMotor.setTargetPosition(-direction *(target)+ frontRightDriveMotor.getCurrentPosition());
+        frontLeftDriveMotor.setTargetPosition(direction *(target)+ frontLeftDriveMotor.getCurrentPosition());
+        backRightDriveMotor.setTargetPosition(direction *(target)+ backRightDriveMotor.getCurrentPosition());
+        backLeftDriveMotor.setTargetPosition(-direction *(target)+ backLeftDriveMotor.getCurrentPosition());
 
-            frontLeftDriveMotor.setTargetPosition(FLtarget);
-            frontRightDriveMotor.setTargetPosition(FRtarget);
-            backLeftDriveMotor.setTargetPosition(BLtarget);
-            backRightDriveMotor.setTargetPosition(BRtarget);
+        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        while ((absolute((frontRightDriveMotor.getCurrentPosition() - startPos)) < ((target)) - 50) && opModeIsActive()) {
 
-        } else {
-            double sideMultiple = 1.2;
+            sleep(TIMESLEEP);
 
-            FLtarget = (int)(-ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
-            FRtarget =(int)(ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
-            BLtarget = (int)(ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
-            BRtarget = (int)(-ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
+            // calculate time
+            timeNow = getRuntime();
+            elapsedTime = timeNow - refTime;
+            dT = timeNow - timeLast;
 
-            frontLeftDriveMotor.setTargetPosition(FLtarget);
-            frontRightDriveMotor.setTargetPosition(FRtarget);
-            backLeftDriveMotor.setTargetPosition(BLtarget);
-            backRightDriveMotor.setTargetPosition(BRtarget);
+            // P
+            anglenow = angles.firstAngle;
+            error = anglenow - reference1;
+            P = error;
+            // I
+            I = Ilast + (error * dT);
+            // D
+            D = (error - errorlast) / dT;
 
-            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            output = ((Kp * P) + (Ki * I) + (Kd * D));
+
+            poB = output * direction;
+            poF = -output * direction;
+            if (poF < -0.8) {
+                poF = -0.8;
+            }
+            if (poB > 0.8) {
+                poB = 0.8;
+            }
+            if (poB < -0.8) {
+                poB = -0.8;
+            }
+            if (poF > 0.8) {
+                poF = 0.8;
+            }
+
+            frontLeftDriveMotor.setPower(initSpeed + poF);
+            frontRightDriveMotor.setPower(initSpeed + poF);
+            backLeftDriveMotor.setPower(initSpeed + poB);
+            backRightDriveMotor.setPower(initSpeed + poB);
+
+            Ilast = I;
+            errorlast = error;
+            timeLast = timeNow;
+
+            telemetry.addData("PoB: ", poB);
+            telemetry.addData("PoF: ", poF);
+            telemetry.addData("error: ", error);
+            telemetry.addData("output: ", output);
+            telemetry.addData("P: ", P);
+            telemetry.addData("I: ", I);
+            telemetry.addData("D: ", D);
+            telemetry.addData("Time that's passed: ", elapsedTime);
+            telemetry.update();
 
         }
-        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())) {
-            poweruse = wheelPower + (((wheelPower - 0.5)/(starttics-FLtarget))* ((frontLeftDriveMotor.getCurrentPosition()-starttics)));
 
-            frontLeftDriveMotor.setPower(poweruse);
-            frontRightDriveMotor.setPower(poweruse);
-            backLeftDriveMotor.setPower(poweruse);
-            backRightDriveMotor.setPower(poweruse);
-            sleep(25);
-        }
-        sleep(200);
-
-        return (0);
     }
+
     public double moveTurnDegrees(double wheelPower, boolean direction, double degrees) {
 
         // direction true => right
@@ -781,6 +1039,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         }
+
         while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())){
             frontLeftDriveMotor.setPower(wheelPower);
             frontRightDriveMotor.setPower(wheelPower);
@@ -791,5 +1050,139 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         sleep(100);
 
         return (0);
+    }
+    public double moveForwardInches(double wheelPower, boolean direction, double inches) {
+
+        // direction true => forward
+        // direction false => backward
+        int ticsPerMotor = 1120;
+        double circumference = 12.125;
+        double ticsPerInch = ticsPerMotor / circumference;
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 25;
+        double poweruse;
+        int starttics = frontLeftDriveMotor.getCurrentPosition();
+
+        if (direction) {
+            FLtarget = (int) (ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget = (int) (ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int) (ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int) (ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        } else {
+            FLtarget = (int) (-ticsPerInch * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget = (int) (-ticsPerInch * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int) (-ticsPerInch * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int) (-ticsPerInch * inches + backRightDriveMotor.getCurrentPosition());
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        }
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition() - FLtarget) > ticksTol) && (absolute(frontRightDriveMotor.getCurrentPosition() - FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition() - BLtarget) > ticksTol) && (absolute(backRightDriveMotor.getCurrentPosition() - BRtarget) > ticksTol) && (opModeIsActive())) {
+            poweruse = wheelPower + (((wheelPower - 0.5) / (starttics - FLtarget)) * ((frontLeftDriveMotor.getCurrentPosition() - starttics)));
+
+            frontLeftDriveMotor.setPower(poweruse);
+            frontRightDriveMotor.setPower(poweruse);
+            backLeftDriveMotor.setPower(poweruse);
+            backRightDriveMotor.setPower(poweruse);
+            sleep(25);
+        }
+        sleep(100);
+        return (0);
+    }
+        public double moveSideInches(double wheelPower, boolean direction, double inches) {
+
+            // direction true => right
+            // direction false => left
+            double ticsPerMotor = 1120;
+            double circumference = 12.125;
+            double ticsPerInch = ticsPerMotor / circumference;
+
+            int FLtarget;
+            int FRtarget;
+            int BLtarget;
+            int BRtarget;
+            int ticksTol = 25;
+            double poweruse;
+            int starttics = frontLeftDriveMotor.getCurrentPosition();
+
+            if (direction) {
+                double sideMultiple = 1.2;
+                FLtarget = (int) (ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
+                FRtarget = (int) (-ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
+                BLtarget = (int) (-ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
+                BRtarget = (int) (ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
+
+                frontLeftDriveMotor.setTargetPosition(FLtarget);
+                frontRightDriveMotor.setTargetPosition(FRtarget);
+                backLeftDriveMotor.setTargetPosition(BLtarget);
+                backRightDriveMotor.setTargetPosition(BRtarget);
+
+                frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            } else {
+                double sideMultiple = 1.2;
+
+                FLtarget = (int) (-ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
+                FRtarget = (int) (ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
+                BLtarget = (int) (ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
+                BRtarget = (int) (-ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
+
+                frontLeftDriveMotor.setTargetPosition(FLtarget);
+                frontRightDriveMotor.setTargetPosition(FRtarget);
+                backLeftDriveMotor.setTargetPosition(BLtarget);
+                backRightDriveMotor.setTargetPosition(BRtarget);
+
+                frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            }
+            while ((absolute(frontLeftDriveMotor.getCurrentPosition() - FLtarget) > ticksTol) && (absolute(frontRightDriveMotor.getCurrentPosition() - FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition() - BLtarget) > ticksTol) && (absolute(backRightDriveMotor.getCurrentPosition() - BRtarget) > ticksTol) && (opModeIsActive())) {
+                poweruse = wheelPower + (((wheelPower - 0.5) / (starttics - FLtarget)) * ((frontLeftDriveMotor.getCurrentPosition() - starttics)));
+
+                frontLeftDriveMotor.setPower(poweruse);
+                frontRightDriveMotor.setPower(poweruse);
+                backLeftDriveMotor.setPower(poweruse);
+                backRightDriveMotor.setPower(poweruse);
+                sleep(25);
+            }
+            sleep(200);
+
+            return (0);
+
+        }
+
+    public double absolute(double inputval) {
+        if (inputval > 0) {
+            return inputval;
+        } else {
+            return -1 * inputval;
+        }
     }
 }

@@ -42,9 +42,9 @@ import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
 
-@TeleOp(name="POV_Mode", group="Linear Opmode")
+@TeleOp(name="POV_Mode_Practice", group="Linear Opmode")
 // @Disabled
-public class POVmode extends LinearOpMode {
+public class POVmodeForTankDrivePractice extends LinearOpMode {
 
     // define IMU
     private BNO055IMU imu;
@@ -80,7 +80,8 @@ public class POVmode extends LinearOpMode {
     final private double TICS_PER_ROTATION_ROTATION_MOTOR = 1425.2;
     final private double TICS_PER_ROTATION_EXTENTION_MOTOR = 537.6;
     final private double TICS_PER_DEGREE = (TICS_PER_ROTATION_ROTATION_MOTOR * 24) / 360;
-
+    final private double FACTOR = 1.1;
+    final private double MAX_FACTOR = 1.5;
 
 
     private ElapsedTime runtime = new ElapsedTime();
@@ -274,13 +275,13 @@ public class POVmode extends LinearOpMode {
                 deliveryServoLeft.setPosition(lastPosLeft);
                 deliveryServoRight.setPosition(lastPosRight);
             }else if ((gamepad1.left_trigger == 0) && (!gamepad1.b) && (lastPosLeft != DELIVERY_SERVO_IN_LEFT)){
-                    deliveryServoLeft.setPosition(DELIVERY_LEFT_OPEN_FULLY);
-                    deliveryServoRight.setPosition(DELIVERY_RIGHT_OPEN_FULLY);
+                deliveryServoLeft.setPosition(DELIVERY_LEFT_OPEN_FULLY);
+                deliveryServoRight.setPosition(DELIVERY_RIGHT_OPEN_FULLY);
             }
 
             //DRIVER 2 : Gamepad 2 controls
 
-            currentState = gamepad2.a;
+         /*   currentState = gamepad2.a;
             if ((!currentState) && (lastState)) {
                 targetPosition++;
             }
@@ -364,29 +365,7 @@ public class POVmode extends LinearOpMode {
                     }
                 } else {
                     // extend arm
-                    double factorExtend;
-                    if ((targetPosition > 0) && (targetPosition < 4)){
-                        factorExtend = 1.1;
-                    }
-                    else if (targetPosition == 4){
-                        factorExtend = 1.19;
-                    }
-                    else if (targetPosition == 5){
-                        factorExtend = 1.21;
-                    }
-                    else if (targetPosition == 6){
-                        factorExtend = 1.28;
-                    }
-                    else if (targetPosition == 7){
-                        factorExtend = 1.32;
-                    }
-                    else if (targetPosition == 8){
-                        factorExtend = 1.35;
-                    }
-                    else{
-                        factorExtend = 1;
-                    }
-                    double hypotenuseWithFactor = (hypotenuse * factorExtend);
+                    double hypotenuseWithFactor = (targetPosition * (Math.pow(FACTOR, 2)) + hypotenuse);
                     double deltaH = hypotenuseWithFactor - BASE_ARM_LENGTH;
                     double rotationsOfArmExtension = deltaH / SPINDLE_CIRCUMFERENCE;
                     int armExPos = 0;
@@ -427,7 +406,7 @@ public class POVmode extends LinearOpMode {
                     armExtendMotor.setTargetPosition(armExtendPosition);
                     armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 }
-            }
+            }*/
 
             if (gamepad2.right_bumper) {                        // right bumper to turn wrist right 90 degrees
                 clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);

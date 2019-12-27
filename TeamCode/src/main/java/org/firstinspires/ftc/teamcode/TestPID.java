@@ -36,6 +36,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Func;
@@ -86,10 +87,10 @@ public class TestPID extends LinearOpMode {
         backLeftDriveMotor = hardwareMap.get(DcMotor.class, "back_left_drive");
         backRightDriveMotor = hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        backRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
 
         // Set up the parameters with which we will use our IMU. Note that integration
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
@@ -108,6 +109,11 @@ public class TestPID extends LinearOpMode {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
 
+        frontLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         // Set up our telemetry dashboard
         composeTelemetry();
 
@@ -122,13 +128,15 @@ public class TestPID extends LinearOpMode {
         imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
 
         // Loop and update the dashboard
-        while (opModeIsActive()) {
-           //PIDstraight(0.02, 0.0009, 0.00009, 0.2, 1, 10);
-           //PIDstraight(0.02, 0.0009, 0.00009, 0.2, -1, 10);
-           PIDturn(0.02, 0.0008, 0.007, -90,0.4);
-           //PIDside(0.02, 0.0009, 0.00009, 0.2, 1, 10);
-           //PIDside(0.02, 0.0009, 0.00009, 0.2, -1, 10);
-           stop();
+        if (opModeIsActive()) {
+            double startAngle = angles.firstAngle;
+            //0.02, 0.0009, 0.00009
+            //PIDstraightInches(0.02,0.0009,0.00009, 0.5, 1, 24, startAngle);
+           //PIDsideInches(0.02, 0.0009, 0.00009, 0.5, 1, 24, startAngle);
+            PIDsideInches(0.02, 0.0009, 0.00009, 0.4, 1, 24, startAngle);
+            PIDsideInches(0.02, 0.0009, 0.00009, 0.4, -1, 24, startAngle);
+            sleep(3000);
+            //  stop();
         }
 
 
@@ -219,7 +227,7 @@ public class TestPID extends LinearOpMode {
     }
 
 
-    public void PIDstraight(double gainP, double gainI, double gainD, double initSpeed, double direction, double targetTime) {
+    public void PIDstraightTime(double gainP, double gainI, double gainD, double initSpeed, double direction, double targetTime) {
         double timeLast = 0;
         double reference1 = angles.firstAngle;
         double Ilast = 0;
@@ -304,11 +312,8 @@ public class TestPID extends LinearOpMode {
 
     }
 
-    public void PIDturn(double gainP, double gainI, double gainD, double turnAngle, double maxpower) {
-        turnAngle = -1 * turnAngle;
+    public void PIDturn(double gainP, double gainI, double gainD, double reference1, double maxpower) {
         double timeLast = 0;
-        double reference1;
-        reference1 = angles.firstAngle + turnAngle;
         double Ilast = 0;
         double errorlast = 0;
         double P;
@@ -324,7 +329,7 @@ public class TestPID extends LinearOpMode {
         double timeNow;
         double poL;
         double poR;
-        double error = turnAngle;
+        double error = reference1 - angles.firstAngle;
         double anglenow;
         double refTime = getRuntime();
         double elapsedTime = 0;
@@ -399,7 +404,7 @@ public class TestPID extends LinearOpMode {
         }
 
     }
-    public void PIDside(double gainP, double gainI, double gainD, double initSpeed, double direction, double targetTime) {
+    public void PIDsideTime(double gainP, double gainI, double gainD, double initSpeed, double direction, double targetTime) {
         double timeLast = 0;
         double reference1 = angles.firstAngle;
         double Ilast = 0;
@@ -480,6 +485,255 @@ public class TestPID extends LinearOpMode {
             telemetry.update();
 
         }
+    }
+    public void PIDstraightInches(double gainP, double gainI, double gainD, double initSpeed, int direction, double targetInches, double reference1) {
+        double timeLast = 0;
+        double Ilast = 0;
+        double errorlast = 0;
+        double P;
+        double I;
+        double D;
+        double dT;
+        double output;
+        double Kp = gainP;
+        double Ki = gainI;
+        double Kd = gainD;
+        double timeNow;
+        double poL;
+        double poR;
+        double error;
+        double anglenow;
+        double refTime = getRuntime();
+        double elapsedTime = 0;
+        long TIMESLEEP = 100;
+        int ticsPerMotor = (1120);
+        double circumference = 12.125;
+        double ticsPerInch = ticsPerMotor / circumference;
+        double startPos = frontRightDriveMotor.getCurrentPosition();
+
+        int target = ((int)(targetInches * ticsPerInch));
+
+        frontRightDriveMotor.setTargetPosition(direction *(target)+ frontRightDriveMotor.getCurrentPosition());
+        frontLeftDriveMotor.setTargetPosition(direction *(target)+ frontLeftDriveMotor.getCurrentPosition());
+        backRightDriveMotor.setTargetPosition(direction *(target)+ backRightDriveMotor.getCurrentPosition());
+        backLeftDriveMotor.setTargetPosition(direction *(target)+ backLeftDriveMotor.getCurrentPosition());
+
+        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        while ((absolute((frontRightDriveMotor.getCurrentPosition() - startPos)) < ((target)) - 50) && opModeIsActive()) {
+
+            sleep(TIMESLEEP);
+
+            // calculate time
+            timeNow = getRuntime();
+            elapsedTime = timeNow - refTime;
+            dT = timeNow - timeLast;
+
+            // P
+            anglenow = angles.firstAngle;
+            error = anglenow - reference1;
+            P = error;
+            // I
+            I = Ilast + (error * dT);
+            // D
+            D = (error - errorlast) / dT;
+
+            output = ((Kp * P) + (Ki * I) + (Kd * D));
+
+            poL = -output * direction;
+            poR = output * direction;
+            if (poR < -0.8) {
+                poR = -0.8;
+            }
+            if (poL > 0.8) {
+                poL = 0.8;
+            }
+            if (poL < -0.8) {
+                poL = -0.8;
+            }
+            if (poR > 0.8) {
+                poR = 0.8;
+            }
+
+            frontLeftDriveMotor.setPower(initSpeed + poL);
+            frontRightDriveMotor.setPower(initSpeed + poR);
+            backLeftDriveMotor.setPower(initSpeed + poL);
+            backRightDriveMotor.setPower(initSpeed + poR);
+
+            Ilast = I;
+            errorlast = error;
+            timeLast = timeNow;
+
+            telemetry.addData("PoL: ", poL);
+            telemetry.addData("PoR: ", poR);
+            telemetry.addData("error: ", error);
+            telemetry.addData("output: ", output);
+            telemetry.addData("P: ", P);
+            telemetry.addData("I: ", I);
+            telemetry.addData("D: ", D);
+            telemetry.addData("Time that's passed: ", elapsedTime);
+            telemetry.update();
+
+        }
+
+    }
+    public void PIDsideInches(double gainP, double gainI, double gainD, double initSpeed, int direction, double targetInches, double reference1) {
+        double timeLast = 0;
+        double Ilast = 0;
+        double errorlast = 0;
+        double P;
+        double I;
+        double D;
+        double dT;
+        double output;
+        double Kp = gainP;
+        double Ki = gainI;
+        double Kd = gainD;
+        double timeNow;
+        double poB;
+        double poF;
+        double error;
+        double anglenow;
+        double refTime = getRuntime();
+        double elapsedTime = 0;
+        long TIMESLEEP = 100;
+        int ticsPerMotor = (1120);
+        double circumference = 12.125;
+        double ticsMultiple = 1.2;
+        double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple);
+        double startPos = frontRightDriveMotor.getCurrentPosition();
+
+        int target = ((int)(targetInches * ticsPerInch));
+
+        frontRightDriveMotor.setTargetPosition(-direction *(target)+ frontRightDriveMotor.getCurrentPosition());
+        frontLeftDriveMotor.setTargetPosition(direction *(target)+ frontLeftDriveMotor.getCurrentPosition());
+        backRightDriveMotor.setTargetPosition(direction *(target)+ backRightDriveMotor.getCurrentPosition());
+        backLeftDriveMotor.setTargetPosition(-direction *(target)+ backLeftDriveMotor.getCurrentPosition());
+
+        frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        while ((absolute((frontRightDriveMotor.getCurrentPosition() - startPos)) < ((target)) - 50) && opModeIsActive()) {
+
+            sleep(TIMESLEEP);
+
+            // calculate time
+            timeNow = getRuntime();
+            elapsedTime = timeNow - refTime;
+            dT = timeNow - timeLast;
+
+            // P
+            anglenow = angles.firstAngle;
+            error = anglenow - reference1;
+            P = error;
+            // I
+            I = Ilast + (error * dT);
+            // D
+            D = (error - errorlast) / dT;
+
+            output = ((Kp * P) + (Ki * I) + (Kd * D));
+
+            poB = output * direction;
+            poF = -output * direction;
+            if (poF < -0.8) {
+                poF = -0.8;
+            }
+            if (poB > 0.8) {
+                poB = 0.8;
+            }
+            if (poB < -0.8) {
+                poB = -0.8;
+            }
+            if (poF > 0.8) {
+                poF = 0.8;
+            }
+
+            frontLeftDriveMotor.setPower(initSpeed + poF);
+            frontRightDriveMotor.setPower(initSpeed + poF);
+            backLeftDriveMotor.setPower(initSpeed + poB);
+            backRightDriveMotor.setPower(initSpeed + poB);
+
+            Ilast = I;
+            errorlast = error;
+            timeLast = timeNow;
+
+            telemetry.addData("PoB: ", poB);
+            telemetry.addData("PoF: ", poF);
+            telemetry.addData("error: ", error);
+            telemetry.addData("output: ", output);
+            telemetry.addData("P: ", P);
+            telemetry.addData("I: ", I);
+            telemetry.addData("D: ", D);
+            telemetry.addData("Time that's passed: ", elapsedTime);
+            telemetry.update();
+
+        }
+
+    }
+
+    public double moveTurnDegrees(double wheelPower, boolean direction, double degrees) {
+
+        // direction true => right
+        // direction false => left
+
+        double ticsPerMotor = 1120;
+        double degreesPerRotation = 48;
+        double ticsToMove = (degrees * ticsPerMotor) / degreesPerRotation;
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 25;
+
+        if (direction) {
+            FLtarget = (int)(-ticsToMove) + frontLeftDriveMotor.getCurrentPosition();
+            FRtarget =(int)(ticsToMove)+ frontRightDriveMotor.getCurrentPosition();
+            BLtarget = (int)(-ticsToMove) + backLeftDriveMotor.getCurrentPosition();
+            BRtarget = (int)(ticsToMove)+ backRightDriveMotor.getCurrentPosition();
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        } else {
+            FLtarget = (int)(ticsToMove) + frontLeftDriveMotor.getCurrentPosition();
+            FRtarget =(int)(-ticsToMove)+ frontRightDriveMotor.getCurrentPosition();
+            BLtarget = (int)(ticsToMove) + backLeftDriveMotor.getCurrentPosition();
+            BRtarget = (int)(-ticsToMove)+ backRightDriveMotor.getCurrentPosition();
+
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
+
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        }
+
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition()-FLtarget) > ticksTol ) && (absolute(frontRightDriveMotor.getCurrentPosition()-FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition()-BLtarget) > ticksTol ) && (absolute(backRightDriveMotor.getCurrentPosition()-BRtarget) > ticksTol) && (opModeIsActive())){
+            frontLeftDriveMotor.setPower(wheelPower);
+            frontRightDriveMotor.setPower(wheelPower);
+            backLeftDriveMotor.setPower(wheelPower);
+            backRightDriveMotor.setPower(wheelPower);
+            sleep(25);
+        }
+        sleep(100);
+
+        return (0);
     }
 
     public double absolute(double inputval) {

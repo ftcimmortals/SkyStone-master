@@ -75,9 +75,9 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
  *
  * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
  */
-@Autonomous(name = "B-F-Close", group = "Concept")
+@Autonomous(name = "DN-Close", group = "Concept")
 //@Disabled                            // Comment this out to add to the opmode list
-public class AutoBlueFoundationParkClose extends LinearOpMode {
+public class AutoDoNothingClose extends LinearOpMode {
     //----------------------------------------------------------------------------------------------
     // State
     //----------------------------------------------------------------------------------------------
@@ -214,373 +214,357 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
         if (opModeIsActive()) {
             double startAngle = angles.firstAngle;
             //0.02, 0.0009, 0.00009
-            moveForwardInches(0.5,false,10);
-            moveSideInches(0.5,false,33);
-            sleep(1000);
-            foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
-            sleep(1000);
-//            moveSideInches(0.5,true,60);
-            PIDsideInches(0.02, 0.0009, 0.00009, 0.3, 1, 60, startAngle);
-            sleep(1000);
-            foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
-            sleep(1000);
-            moveForwardInches(0.5,true,30);
-            moveSideInches(0.5,false,18);
-            moveForwardInches(0.5,false,18);
-            sleep(500);
-            moveForwardInches(0.5,true,3);
-            moveSideInches(0.5,true,20);
-            moveForwardInches(0.5,true,25);
+            moveForwardInches(0.5,false,12);
         }
 
     }
-        //----------------------------------------------------------------------------------------------
-        // Telemetry Configuration
-        //----------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------
+    // Telemetry Configuration
+    //----------------------------------------------------------------------------------------------
 
-        void composeTelemetry () {
+    void composeTelemetry () {
 
-            // At the beginning of each telemetry update, grab a bunch of data
-            // from the IMU that we will then display in separate lines.
-            telemetry.addAction(new Runnable() {
-                @Override
-                public void run() {
-                    // Acquiring the angles is relatively expensive; we don't want
-                    // to do that in each of the three items that need that info, as that's
-                    // three times the necessary expense.
-                    angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-                    gravity = imu.getGravity();
+        // At the beginning of each telemetry update, grab a bunch of data
+        // from the IMU that we will then display in separate lines.
+        telemetry.addAction(new Runnable() {
+            @Override
+            public void run() {
+                // Acquiring the angles is relatively expensive; we don't want
+                // to do that in each of the three items that need that info, as that's
+                // three times the necessary expense.
+                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                gravity = imu.getGravity();
+            }
+        });
+
+        telemetry.addLine()
+                .addData("status", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return imu.getSystemStatus().toShortString();
+                    }
+                })
+                .addData("calib", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return imu.getCalibrationStatus().toString();
+                    }
+                });
+
+        telemetry.addLine()
+                .addData("heading", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return formatAngle(angles.angleUnit, angles.firstAngle);
+                    }
+                })
+                .addData("roll", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return formatAngle(angles.angleUnit, angles.secondAngle);
+                    }
+                })
+                .addData("pitch", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return formatAngle(angles.angleUnit, angles.thirdAngle);
+                    }
+                });
+
+        telemetry.addLine()
+                .addData("grvty", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return gravity.toString();
+                    }
+                })
+                .addData("mag", new Func<String>() {
+                    @Override
+                    public String value() {
+                        return String.format(Locale.getDefault(), "%.3f",
+                                Math.sqrt(gravity.xAccel * gravity.xAccel
+                                        + gravity.yAccel * gravity.yAccel
+                                        + gravity.zAccel * gravity.zAccel));
+                    }
+                });
+
+    }
+
+    //----------------------------------------------------------------------------------------------
+    // Formatting
+    //----------------------------------------------------------------------------------------------
+
+    String formatAngle (AngleUnit angleUnit,double angle){
+        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
+    }
+
+    String formatDegrees ( double degrees){
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
+
+
+    public void PIDstraightTime ( double gainP, double gainI, double gainD, double initSpeed,
+                                  double direction, double targetTime){
+        double timeLast = 0;
+        double reference1 = angles.firstAngle;
+        double Ilast = 0;
+        double errorlast = 0;
+        double P;
+        double I;
+        double D;
+        double dT;
+        double output;
+        double Kp = gainP;
+        double Ki = gainI;
+        double Kd = gainD;
+        double timeNow;
+        double poL;
+        double poR;
+        double error;
+        double anglenow;
+        double refTime = getRuntime();
+        double elapsedTime = 0;
+        long TIMESLEEP = 100;
+
+        while ((elapsedTime < targetTime) && opModeIsActive()) {
+
+            sleep(TIMESLEEP);
+
+            // calculate time
+            timeNow = getRuntime();
+            elapsedTime = timeNow - refTime;
+            dT = timeNow - timeLast;
+
+            // P
+            anglenow = angles.firstAngle;
+            error = anglenow - reference1;
+            P = error;
+            // I
+            I = Ilast + (error * dT);
+            // D
+            D = (error - errorlast) / dT;
+
+            output = ((Kp * P) + (Ki * I) + (Kd * D));
+
+            if (output < 0) {
+                poL = -output;
+                poR = output;
+                if (poR < -0.8) {
+                    poR = -0.8;
                 }
-            });
-
-            telemetry.addLine()
-                    .addData("status", new Func<String>() {
-                        @Override
-                        public String value() {
-                            return imu.getSystemStatus().toShortString();
-                        }
-                    })
-                    .addData("calib", new Func<String>() {
-                        @Override
-                        public String value() {
-                            return imu.getCalibrationStatus().toString();
-                        }
-                    });
-
-            telemetry.addLine()
-                    .addData("heading", new Func<String>() {
-                        @Override
-                        public String value() {
-                            return formatAngle(angles.angleUnit, angles.firstAngle);
-                        }
-                    })
-                    .addData("roll", new Func<String>() {
-                        @Override
-                        public String value() {
-                            return formatAngle(angles.angleUnit, angles.secondAngle);
-                        }
-                    })
-                    .addData("pitch", new Func<String>() {
-                        @Override
-                        public String value() {
-                            return formatAngle(angles.angleUnit, angles.thirdAngle);
-                        }
-                    });
-
-            telemetry.addLine()
-                    .addData("grvty", new Func<String>() {
-                        @Override
-                        public String value() {
-                            return gravity.toString();
-                        }
-                    })
-                    .addData("mag", new Func<String>() {
-                        @Override
-                        public String value() {
-                            return String.format(Locale.getDefault(), "%.3f",
-                                    Math.sqrt(gravity.xAccel * gravity.xAccel
-                                            + gravity.yAccel * gravity.yAccel
-                                            + gravity.zAccel * gravity.zAccel));
-                        }
-                    });
-
-        }
-
-        //----------------------------------------------------------------------------------------------
-        // Formatting
-        //----------------------------------------------------------------------------------------------
-
-        String formatAngle (AngleUnit angleUnit,double angle){
-            return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
-        }
-
-        String formatDegrees ( double degrees){
-            return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
-        }
-
-
-        public void PIDstraightTime ( double gainP, double gainI, double gainD, double initSpeed,
-        double direction, double targetTime){
-            double timeLast = 0;
-            double reference1 = angles.firstAngle;
-            double Ilast = 0;
-            double errorlast = 0;
-            double P;
-            double I;
-            double D;
-            double dT;
-            double output;
-            double Kp = gainP;
-            double Ki = gainI;
-            double Kd = gainD;
-            double timeNow;
-            double poL;
-            double poR;
-            double error;
-            double anglenow;
-            double refTime = getRuntime();
-            double elapsedTime = 0;
-            long TIMESLEEP = 100;
-
-            while ((elapsedTime < targetTime) && opModeIsActive()) {
-
-                sleep(TIMESLEEP);
-
-                // calculate time
-                timeNow = getRuntime();
-                elapsedTime = timeNow - refTime;
-                dT = timeNow - timeLast;
-
-                // P
-                anglenow = angles.firstAngle;
-                error = anglenow - reference1;
-                P = error;
-                // I
-                I = Ilast + (error * dT);
-                // D
-                D = (error - errorlast) / dT;
-
-                output = ((Kp * P) + (Ki * I) + (Kd * D));
-
-                if (output < 0) {
-                    poL = -output;
-                    poR = output;
-                    if (poR < -0.8) {
-                        poR = -0.8;
-                    }
-                    if (poL > 0.8) {
-                        poL = 0.8;
-                    }
-                } else {
-                    poL = -output;
-                    poR = output;
-                    if (poL < -0.8) {
-                        poL = -0.8;
-                    }
-                    if (poR > 0.8) {
-                        poR = 0.8;
-                    }
+                if (poL > 0.8) {
+                    poL = 0.8;
                 }
-
-                frontLeftDriveMotor.setPower(-initSpeed * direction + poL);
-                frontRightDriveMotor.setPower(-initSpeed * direction + poR);
-                backLeftDriveMotor.setPower(-initSpeed * direction + poL);
-                backRightDriveMotor.setPower(-initSpeed * direction + poR);
-
-                Ilast = I;
-                errorlast = error;
-                timeLast = timeNow;
-
-                telemetry.addData("PoL: ", poL);
-                telemetry.addData("PoR: ", poR);
-                telemetry.addData("error: ", error);
-                telemetry.addData("output: ", output);
-                telemetry.addData("P: ", P);
-                telemetry.addData("I: ", I);
-                telemetry.addData("D: ", D);
-                telemetry.addData("Time that's passed: ", elapsedTime);
-                telemetry.update();
-
+            } else {
+                poL = -output;
+                poR = output;
+                if (poL < -0.8) {
+                    poL = -0.8;
+                }
+                if (poR > 0.8) {
+                    poR = 0.8;
+                }
             }
 
+            frontLeftDriveMotor.setPower(-initSpeed * direction + poL);
+            frontRightDriveMotor.setPower(-initSpeed * direction + poR);
+            backLeftDriveMotor.setPower(-initSpeed * direction + poL);
+            backRightDriveMotor.setPower(-initSpeed * direction + poR);
+
+            Ilast = I;
+            errorlast = error;
+            timeLast = timeNow;
+
+            telemetry.addData("PoL: ", poL);
+            telemetry.addData("PoR: ", poR);
+            telemetry.addData("error: ", error);
+            telemetry.addData("output: ", output);
+            telemetry.addData("P: ", P);
+            telemetry.addData("I: ", I);
+            telemetry.addData("D: ", D);
+            telemetry.addData("Time that's passed: ", elapsedTime);
+            telemetry.update();
+
         }
 
-        public void PIDturn ( double gainP, double gainI, double gainD, double reference1,
-        double maxpower){
-            double timeLast = 0;
-            double Ilast = 0;
-            double errorlast = 0;
-            double P;
-            double I;
-            double D;
-            double dT;
-            double outputPID;
-            double outputPD;
-            double output;
-            double Kp = gainP;
-            double Ki = gainI;
-            double Kd = gainD;
-            double timeNow;
-            double poL;
-            double poR;
-            double error = reference1 - angles.firstAngle;
-            double anglenow;
-            double refTime = getRuntime();
-            double elapsedTime = 0;
-            long TIMESLEEP = 100;
+    }
+
+    public void PIDturn ( double gainP, double gainI, double gainD, double reference1,
+                          double maxpower){
+        double timeLast = 0;
+        double Ilast = 0;
+        double errorlast = 0;
+        double P;
+        double I;
+        double D;
+        double dT;
+        double outputPID;
+        double outputPD;
+        double output;
+        double Kp = gainP;
+        double Ki = gainI;
+        double Kd = gainD;
+        double timeNow;
+        double poL;
+        double poR;
+        double error = reference1 - angles.firstAngle;
+        double anglenow;
+        double refTime = getRuntime();
+        double elapsedTime = 0;
+        long TIMESLEEP = 100;
 
 
-            while ((absolute(error) > 0.5) && opModeIsActive()) {
+        while ((absolute(error) > 0.5) && opModeIsActive()) {
 
-                sleep(TIMESLEEP);
+            sleep(TIMESLEEP);
 
-                // calculate time
-                timeNow = getRuntime();
-                elapsedTime = timeNow - refTime;
-                dT = timeNow - timeLast;
+            // calculate time
+            timeNow = getRuntime();
+            elapsedTime = timeNow - refTime;
+            dT = timeNow - timeLast;
 
-                // P
-                anglenow = angles.firstAngle;
-                error = anglenow - reference1;
-                P = error;
-                // I
-                I = Ilast + (error * dT);
-                // D
-                D = (error - errorlast) / dT;
+            // P
+            anglenow = angles.firstAngle;
+            error = anglenow - reference1;
+            P = error;
+            // I
+            I = Ilast + (error * dT);
+            // D
+            D = (error - errorlast) / dT;
 
-                outputPID = ((Kp * P) + (Ki * I) + (Kd * D));
-                outputPD = ((Kp * P) + (Kd * D));
-                if (absolute(error) < 6.0) {
-                    output = outputPID;
-                } else {
-                    output = outputPD;
-                }
-
-                if (output < 0) {
-                    poL = -output;
-                    poR = output;
-                    if (poR < -maxpower) {
-                        poR = -maxpower;
-                    }
-                    if (poL > maxpower) {
-                        poL = maxpower;
-                    }
-                } else {
-                    poL = -output;
-                    poR = output;
-                    if (poL < -maxpower) {
-                        poL = -maxpower;
-                    }
-                    if (poR > maxpower) {
-                        poR = maxpower;
-                    }
-                }
-
-                frontLeftDriveMotor.setPower(poL);
-                frontRightDriveMotor.setPower(poR);
-                backLeftDriveMotor.setPower(poL);
-                backRightDriveMotor.setPower(poR);
-
-                Ilast = I;
-                errorlast = error;
-                timeLast = timeNow;
-
-                telemetry.addData("PoL: ", poL);
-                telemetry.addData("PoR: ", poR);
-                telemetry.addData("error: ", error);
-                telemetry.addData("output: ", output);
-                telemetry.addData("P: ", P);
-                telemetry.addData("I: ", I);
-                telemetry.addData("D: ", D);
-                telemetry.addData("Time that's passed: ", elapsedTime);
-                telemetry.update();
-
+            outputPID = ((Kp * P) + (Ki * I) + (Kd * D));
+            outputPD = ((Kp * P) + (Kd * D));
+            if (absolute(error) < 6.0) {
+                output = outputPID;
+            } else {
+                output = outputPD;
             }
 
-        }
-        public void PIDsideTime ( double gainP, double gainI, double gainD, double initSpeed,
-        double direction, double targetTime){
-            double timeLast = 0;
-            double reference1 = angles.firstAngle;
-            double Ilast = 0;
-            double errorlast = 0;
-            double P;
-            double I;
-            double D;
-            double dT;
-            double output;
-            double Kp = gainP;
-            double Ki = gainI;
-            double Kd = gainD;
-            double timeNow;
-            double poL;
-            double poR;
-            double error;
-            double anglenow;
-            double refTime = getRuntime();
-            double elapsedTime = 0;
-            long TIMESLEEP = 100;
-            while ((elapsedTime < targetTime) && opModeIsActive()) {
-
-                sleep(TIMESLEEP);
-
-                // calculate time
-                timeNow = getRuntime();
-                elapsedTime = timeNow - refTime;
-                dT = timeNow - timeLast;
-
-                // P
-                anglenow = angles.firstAngle;
-                error = anglenow - reference1;
-                P = error;
-                // I
-                I = Ilast + (error * dT);
-                // D
-                D = (error - errorlast) / dT;
-
-                output = ((Kp * P) + (Ki * I) + (Kd * D));
-
-                if (output < 0) {
-                    poL = -output;
-                    poR = output;
-                    if (poR < -0.8) {
-                        poR = -0.8;
-                    }
-                    if (poL > 0.8) {
-                        poL = 0.8;
-                    }
-                } else {
-                    poL = -output;
-                    poR = output;
-                    if (poL < -0.8) {
-                        poL = -0.8;
-                    }
-                    if (poR > 0.8) {
-                        poR = 0.8;
-                    }
+            if (output < 0) {
+                poL = -output;
+                poR = output;
+                if (poR < -maxpower) {
+                    poR = -maxpower;
                 }
-
-                frontLeftDriveMotor.setPower(-initSpeed * direction + poL);
-                frontRightDriveMotor.setPower(initSpeed * direction + poR);
-                backLeftDriveMotor.setPower(initSpeed * direction + poL);
-                backRightDriveMotor.setPower(-initSpeed * direction + poR);
-
-                Ilast = I;
-                errorlast = error;
-                timeLast = timeNow;
-
-                telemetry.addData("PoL: ", poL);
-                telemetry.addData("PoR: ", poR);
-                telemetry.addData("error: ", error);
-                telemetry.addData("output: ", output);
-                telemetry.addData("P: ", P);
-                telemetry.addData("I: ", I);
-                telemetry.addData("D: ", D);
-                telemetry.addData("Time that's passed: ", elapsedTime);
-                telemetry.update();
-
+                if (poL > maxpower) {
+                    poL = maxpower;
+                }
+            } else {
+                poL = -output;
+                poR = output;
+                if (poL < -maxpower) {
+                    poL = -maxpower;
+                }
+                if (poR > maxpower) {
+                    poR = maxpower;
+                }
             }
+
+            frontLeftDriveMotor.setPower(poL);
+            frontRightDriveMotor.setPower(poR);
+            backLeftDriveMotor.setPower(poL);
+            backRightDriveMotor.setPower(poR);
+
+            Ilast = I;
+            errorlast = error;
+            timeLast = timeNow;
+
+            telemetry.addData("PoL: ", poL);
+            telemetry.addData("PoR: ", poR);
+            telemetry.addData("error: ", error);
+            telemetry.addData("output: ", output);
+            telemetry.addData("P: ", P);
+            telemetry.addData("I: ", I);
+            telemetry.addData("D: ", D);
+            telemetry.addData("Time that's passed: ", elapsedTime);
+            telemetry.update();
+
         }
+
+    }
+    public void PIDsideTime ( double gainP, double gainI, double gainD, double initSpeed,
+                              double direction, double targetTime){
+        double timeLast = 0;
+        double reference1 = angles.firstAngle;
+        double Ilast = 0;
+        double errorlast = 0;
+        double P;
+        double I;
+        double D;
+        double dT;
+        double output;
+        double Kp = gainP;
+        double Ki = gainI;
+        double Kd = gainD;
+        double timeNow;
+        double poL;
+        double poR;
+        double error;
+        double anglenow;
+        double refTime = getRuntime();
+        double elapsedTime = 0;
+        long TIMESLEEP = 100;
+        while ((elapsedTime < targetTime) && opModeIsActive()) {
+
+            sleep(TIMESLEEP);
+
+            // calculate time
+            timeNow = getRuntime();
+            elapsedTime = timeNow - refTime;
+            dT = timeNow - timeLast;
+
+            // P
+            anglenow = angles.firstAngle;
+            error = anglenow - reference1;
+            P = error;
+            // I
+            I = Ilast + (error * dT);
+            // D
+            D = (error - errorlast) / dT;
+
+            output = ((Kp * P) + (Ki * I) + (Kd * D));
+
+            if (output < 0) {
+                poL = -output;
+                poR = output;
+                if (poR < -0.8) {
+                    poR = -0.8;
+                }
+                if (poL > 0.8) {
+                    poL = 0.8;
+                }
+            } else {
+                poL = -output;
+                poR = output;
+                if (poL < -0.8) {
+                    poL = -0.8;
+                }
+                if (poR > 0.8) {
+                    poR = 0.8;
+                }
+            }
+
+            frontLeftDriveMotor.setPower(-initSpeed * direction + poL);
+            frontRightDriveMotor.setPower(initSpeed * direction + poR);
+            backLeftDriveMotor.setPower(initSpeed * direction + poL);
+            backRightDriveMotor.setPower(-initSpeed * direction + poR);
+
+            Ilast = I;
+            errorlast = error;
+            timeLast = timeNow;
+
+            telemetry.addData("PoL: ", poL);
+            telemetry.addData("PoR: ", poR);
+            telemetry.addData("error: ", error);
+            telemetry.addData("output: ", output);
+            telemetry.addData("P: ", P);
+            telemetry.addData("I: ", I);
+            telemetry.addData("D: ", D);
+            telemetry.addData("Time that's passed: ", elapsedTime);
+            telemetry.update();
+
+        }
+    }
     public void PIDstraightInches(double gainP, double gainI, double gainD, double initSpeed, int direction, double targetInches, double reference1) {
         double timeLast = 0;
         double Ilast = 0;
@@ -890,72 +874,72 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
         sleep(100);
         return (0);
     }
-        public double moveSideInches(double wheelPower, boolean direction, double inches) {
+    public double moveSideInches(double wheelPower, boolean direction, double inches) {
 
-            // direction true => right
-            // direction false => left
-            double ticsPerMotor = 1120;
-            double circumference = 12.125;
-            double ticsPerInch = ticsPerMotor / circumference;
+        // direction true => right
+        // direction false => left
+        double ticsPerMotor = 1120;
+        double circumference = 12.125;
+        double ticsPerInch = ticsPerMotor / circumference;
 
-            int FLtarget;
-            int FRtarget;
-            int BLtarget;
-            int BRtarget;
-            int ticksTol = 25;
-            double poweruse;
-            int starttics = frontLeftDriveMotor.getCurrentPosition();
+        int FLtarget;
+        int FRtarget;
+        int BLtarget;
+        int BRtarget;
+        int ticksTol = 25;
+        double poweruse;
+        int starttics = frontLeftDriveMotor.getCurrentPosition();
 
-            if (direction) {
-                double sideMultiple = 1.2;
-                FLtarget = (int) (ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
-                FRtarget = (int) (-ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
-                BLtarget = (int) (-ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
-                BRtarget = (int) (ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
+        if (direction) {
+            double sideMultiple = 1.2;
+            FLtarget = (int) (ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget = (int) (-ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int) (-ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int) (ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
 
-                frontLeftDriveMotor.setTargetPosition(FLtarget);
-                frontRightDriveMotor.setTargetPosition(FRtarget);
-                backLeftDriveMotor.setTargetPosition(BLtarget);
-                backRightDriveMotor.setTargetPosition(BRtarget);
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
 
-                frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            } else {
-                double sideMultiple = 1.2;
+        } else {
+            double sideMultiple = 1.2;
 
-                FLtarget = (int) (-ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
-                FRtarget = (int) (ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
-                BLtarget = (int) (ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
-                BRtarget = (int) (-ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
+            FLtarget = (int) (-ticsPerInch * sideMultiple * inches + frontLeftDriveMotor.getCurrentPosition());
+            FRtarget = (int) (ticsPerInch * sideMultiple * inches + frontRightDriveMotor.getCurrentPosition());
+            BLtarget = (int) (ticsPerInch * sideMultiple * inches + backLeftDriveMotor.getCurrentPosition());
+            BRtarget = (int) (-ticsPerInch * sideMultiple * inches + backRightDriveMotor.getCurrentPosition());
 
-                frontLeftDriveMotor.setTargetPosition(FLtarget);
-                frontRightDriveMotor.setTargetPosition(FRtarget);
-                backLeftDriveMotor.setTargetPosition(BLtarget);
-                backRightDriveMotor.setTargetPosition(BRtarget);
+            frontLeftDriveMotor.setTargetPosition(FLtarget);
+            frontRightDriveMotor.setTargetPosition(FRtarget);
+            backLeftDriveMotor.setTargetPosition(BLtarget);
+            backRightDriveMotor.setTargetPosition(BRtarget);
 
-                frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            }
-            while ((absolute(frontLeftDriveMotor.getCurrentPosition() - FLtarget) > ticksTol) && (absolute(frontRightDriveMotor.getCurrentPosition() - FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition() - BLtarget) > ticksTol) && (absolute(backRightDriveMotor.getCurrentPosition() - BRtarget) > ticksTol) && (opModeIsActive())) {
-                poweruse = wheelPower + (((wheelPower - 0.5) / (starttics - FLtarget)) * ((frontLeftDriveMotor.getCurrentPosition() - starttics)));
-
-                frontLeftDriveMotor.setPower(poweruse);
-                frontRightDriveMotor.setPower(poweruse);
-                backLeftDriveMotor.setPower(poweruse);
-                backRightDriveMotor.setPower(poweruse);
-                sleep(25);
-            }
-            sleep(200);
-
-            return (0);
+            frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         }
+        while ((absolute(frontLeftDriveMotor.getCurrentPosition() - FLtarget) > ticksTol) && (absolute(frontRightDriveMotor.getCurrentPosition() - FRtarget) > ticksTol) && (absolute(backLeftDriveMotor.getCurrentPosition() - BLtarget) > ticksTol) && (absolute(backRightDriveMotor.getCurrentPosition() - BRtarget) > ticksTol) && (opModeIsActive())) {
+            poweruse = wheelPower + (((wheelPower - 0.5) / (starttics - FLtarget)) * ((frontLeftDriveMotor.getCurrentPosition() - starttics)));
+
+            frontLeftDriveMotor.setPower(poweruse);
+            frontRightDriveMotor.setPower(poweruse);
+            backLeftDriveMotor.setPower(poweruse);
+            backRightDriveMotor.setPower(poweruse);
+            sleep(25);
+        }
+        sleep(200);
+
+        return (0);
+
+    }
 
     public double absolute(double inputval) {
         if (inputval > 0) {
