@@ -160,10 +160,10 @@ public class AutoRedFoundationParkFar extends LinearOpMode {
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        frontLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        backLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        backRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
 
         capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
@@ -214,23 +214,23 @@ public class AutoRedFoundationParkFar extends LinearOpMode {
         if (opModeIsActive()) {
             double startAngle = angles.firstAngle;
             //0.02, 0.0009, 0.00009
-            moveForwardInches(0.5,true,10);
-            moveSideInches(0.5,false,33);
+            moveForwardInches(0.2,true,10);
+            moveSideInches(0.1,false,33);
             sleep(1000);
             foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
             sleep(1000);
 //            moveSideInches(0.5,true,60);
-            PIDsideInches(0.02, 0.0009, 0.00009, 0.3, 1, 60, startAngle);
+            PIDsideInches(0.01, 0.00045, 0.000045, 0.2, 1, 60, startAngle);
             sleep(1000);
             foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
             sleep(1000);
-            moveForwardInches(0.5,false,30);
-            moveSideInches(0.5,false,18);
-            moveForwardInches(0.5,true,18);
+            moveForwardInches(0.2,false,30);
+            moveSideInches(0.2,false,18);
+            moveForwardInches(0.2,true,18);
             sleep(500);
-            moveForwardInches(0.5,false,3);
-            moveSideInches(0.5,false,9);
-            moveForwardInches(0.5,false,25);
+            moveForwardInches(0.2,false,3);
+            moveSideInches(0.2,false,9);
+            moveForwardInches(0.2,false,25);
         }
 
     }
@@ -603,7 +603,7 @@ public class AutoRedFoundationParkFar extends LinearOpMode {
         long TIMESLEEP = 100;
         int ticsPerMotor = (1120);
         double circumference = 12.125;
-        double ticsPerInch = ticsPerMotor / circumference;
+        double ticsPerInch = (ticsPerMotor / circumference) / 2;
         double startPos = frontRightDriveMotor.getCurrentPosition();
 
         int target = ((int)(targetInches * ticsPerInch));
@@ -698,7 +698,7 @@ public class AutoRedFoundationParkFar extends LinearOpMode {
         int ticsPerMotor = (1120);
         double circumference = 12.125;
         double ticsMultiple = 1.2;
-        double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple);
+        double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple) / 2;
         double startPos = frontRightDriveMotor.getCurrentPosition();
 
         int target = ((int)(targetInches * ticsPerInch));
@@ -778,7 +778,7 @@ public class AutoRedFoundationParkFar extends LinearOpMode {
 
         double ticsPerMotor = 1120;
         double degreesPerRotation = 48;
-        double ticsToMove = (degrees * ticsPerMotor) / degreesPerRotation;
+        double ticsToMove = ((degrees * ticsPerMotor) / degreesPerRotation) / 2;
         int FLtarget;
         int FRtarget;
         int BLtarget;
@@ -836,7 +836,7 @@ public class AutoRedFoundationParkFar extends LinearOpMode {
         // direction false => backward
         int ticsPerMotor = 1120;
         double circumference = 12.125;
-        double ticsPerInch = ticsPerMotor / circumference;
+        double ticsPerInch = (ticsPerMotor / circumference) / 2;
         int FLtarget;
         int FRtarget;
         int BLtarget;
@@ -896,7 +896,7 @@ public class AutoRedFoundationParkFar extends LinearOpMode {
         // direction false => left
         double ticsPerMotor = 1120;
         double circumference = 12.125;
-        double ticsPerInch = ticsPerMotor / circumference;
+        double ticsPerInch = (ticsPerMotor / circumference) / 2;
 
         int FLtarget;
         int FRtarget;

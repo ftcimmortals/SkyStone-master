@@ -59,7 +59,7 @@ import java.util.Locale;
  * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
  */
 @Autonomous(name = "(test)PID", group = "Sensor")
-@Disabled                            // Comment this out to add to the opmode list
+//@Disabled                            // Comment this out to add to the opmode list
 public class TestPID extends LinearOpMode {
     //----------------------------------------------------------------------------------------------
     // State
@@ -87,10 +87,10 @@ public class TestPID extends LinearOpMode {
         backLeftDriveMotor = hardwareMap.get(DcMotor.class, "back_left_drive");
         backRightDriveMotor = hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        frontLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        backLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        backRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // Set up the parameters with which we will use our IMU. Note that integration
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
@@ -130,12 +130,15 @@ public class TestPID extends LinearOpMode {
         // Loop and update the dashboard
         if (opModeIsActive()) {
             double startAngle = angles.firstAngle;
-            //0.02, 0.0009, 0.00009
-            //PIDstraightInches(0.02,0.0009,0.00009, 0.5, 1, 24, startAngle);
-           //PIDsideInches(0.02, 0.0009, 0.00009, 0.5, 1, 24, startAngle);
-            PIDsideInches(0.02, 0.0009, 0.00009, 0.4, 1, 24, startAngle);
-            PIDsideInches(0.02, 0.0009, 0.00009, 0.4, -1, 24, startAngle);
-            sleep(3000);
+            sleep(1000);
+            //0.01, 0.00045, 0.000045
+            PIDstraightInches(0.01, 0.0, 0.0, 0.2, -1, 18, startAngle);
+            moveTurnDegrees(0.2, false, 90);
+            double newangle = startAngle+90.0;
+            sleep(1000);
+            PIDstraightInches(0.01, 0.0, 0.0, 0.2, -1, 2000, newangle);
+
+
             //  stop();
         }
 
@@ -503,12 +506,13 @@ public class TestPID extends LinearOpMode {
         double poR;
         double error;
         double anglenow;
+        anglenow = angles.firstAngle;
         double refTime = getRuntime();
         double elapsedTime = 0;
         long TIMESLEEP = 100;
         int ticsPerMotor = (1120);
         double circumference = 12.125;
-        double ticsPerInch = ticsPerMotor / circumference;
+        double ticsPerInch = (ticsPerMotor / circumference) / 2;
         double startPos = frontRightDriveMotor.getCurrentPosition();
 
         int target = ((int)(targetInches * ticsPerInch));
@@ -569,12 +573,15 @@ public class TestPID extends LinearOpMode {
 
             telemetry.addData("PoL: ", poL);
             telemetry.addData("PoR: ", poR);
+            telemetry.addData("angleNOW",anglenow);
+            telemetry.addData("reference1", reference1);
             telemetry.addData("error: ", error);
             telemetry.addData("output: ", output);
             telemetry.addData("P: ", P);
             telemetry.addData("I: ", I);
             telemetry.addData("D: ", D);
             telemetry.addData("Time that's passed: ", elapsedTime);
+            telemetry.addData("dT", dT);
             telemetry.update();
 
         }
@@ -603,7 +610,7 @@ public class TestPID extends LinearOpMode {
         int ticsPerMotor = (1120);
         double circumference = 12.125;
         double ticsMultiple = 1.2;
-        double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple);
+        double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple) / 2;
         double startPos = frontRightDriveMotor.getCurrentPosition();
 
         int target = ((int)(targetInches * ticsPerInch));
@@ -683,7 +690,7 @@ public class TestPID extends LinearOpMode {
 
         double ticsPerMotor = 1120;
         double degreesPerRotation = 48;
-        double ticsToMove = (degrees * ticsPerMotor) / degreesPerRotation;
+        double ticsToMove = ((degrees * ticsPerMotor) / degreesPerRotation) / 2;
         int FLtarget;
         int FRtarget;
         int BLtarget;

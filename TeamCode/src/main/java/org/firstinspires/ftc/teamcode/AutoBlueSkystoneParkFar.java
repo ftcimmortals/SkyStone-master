@@ -112,9 +112,9 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
 
     final private double FINGERS_OPEN = 0.05;               // open claw
     final private double FINGERS_CLOSED = 0.5;              //close claw
-    final private double GAIN_P = 0.02;
-    final private double GAIN_I = 0.0009;
-    final private double GAIN_D = 0.00009;
+    final private double GAIN_P = 0.01;
+    final private double GAIN_I = 0.00045;
+    final private double GAIN_D = 0.000045;
 
     /**
      * This is the webcam we are to use. As with other hardware devices such as motors and
@@ -193,10 +193,10 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        frontLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        backLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        backRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
 
         capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
@@ -315,7 +315,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         if (opModeIsActive()) {
             double startAngle = angles.firstAngle;
             //0.02, 0.0009, 0.00009
-            PIDstraightInches(GAIN_P,GAIN_I,GAIN_D, 0.5, -1, 18, startAngle);
+            PIDstraightInches(GAIN_P,GAIN_I,GAIN_D, 0.2, -1, 18, startAngle);
             for (int ii = 0; ii < 2; ii++) {
                 VuforiaTrackable trackable = allTrackables.get(0);
                 sleep(500);
@@ -345,36 +345,37 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                 double Ypos = translation.get(1) / mmPerInch;
                 telemetry.addData("Ypos: ", absolute(Ypos));
                 telemetry.update();
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 5.5, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 3.5, startAngle);
                 double blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, blockDistance + 2, startAngle);
                 sleep(500);
                 stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
                 sleep(500);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 27, startAngle);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 9, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 12, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 29, startAngle);
                 sleep(500);
                 stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
                 sleep(500);
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 30, startAngle);
-                moveSideInches(0.75, false, 52);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, 34, startAngle);
                 sleep(500);
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 17, startAngle);
+                moveSideInches(0.35, false, 54);
+                sleep(500);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 16.5, startAngle);
                 blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, blockDistance + 2, startAngle);
                 sleep(500);
                 stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
                 sleep(500);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 49, startAngle);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 9, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 12, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 49, startAngle);
                 sleep(500);
                 stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
                 sleep(500);
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 14, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, 14, startAngle);
             }else{
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 8, startAngle);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, 8, startAngle);
                 for (int ii = 0; ii < 2; ii++) {
                     VuforiaTrackable trackable = allTrackables.get(0);
                     sleep(500);
@@ -392,62 +393,62 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
                 telemetry.addData("Visible or not? ", targetVisible);
                 if(targetVisible){
                     //Second Stone
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 5.5, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 5.5, startAngle);
                     double blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
-                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, blockDistance + 2, startAngle);
                     sleep(500);
                     stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
                     sleep(500);
-                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 35, startAngle);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 9, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 12, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 35, startAngle);
                     sleep(500);
                     stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
                     sleep(500);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 30, startAngle);
-                    moveSideInches(0.75, false, 52);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, 34, startAngle);
+                    moveSideInches(0.35, false, 54);
                     sleep(500);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 9, startAngle);
                     blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
-                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, blockDistance + 2, startAngle);
                     sleep(500);
                     stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
                     sleep(500);
-                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 56, startAngle);                    sleep(500);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 9, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 12, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 56, startAngle);                    sleep(500);
                     stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
                     sleep(500);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 14, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, 14, startAngle);
                 }else{
                     //Third Stone
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 4, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, 4, startAngle);
                     double blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
-                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, blockDistance + 2, startAngle);
                     sleep(500);
                     stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
                     sleep(500);
-                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 43, startAngle);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 9, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 12, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 43, startAngle);
                     sleep(500);
                     stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
                     sleep(500);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 30, startAngle);
-                    moveSideInches(0.75, false, 52);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, 34, startAngle);
+                    moveSideInches(0.35, false, 54);
                     sleep(500);
                     blockDistance = sensorBlue.getDistance(DistanceUnit.INCH);
-                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, blockDistance + 2, startAngle);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, blockDistance + 2, startAngle);
                     sleep(500);
                     stoneServoBlue.setPosition(STONE_PICKER_OPEN_BLUE);
                     sleep(500);
-                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 9, startAngle);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 12, startAngle);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 64, startAngle);
+                    PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 9, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 12, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 64, startAngle);
                     sleep(500);
                     stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
                     sleep(500);
-                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 14, startAngle);
+                    PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, 14, startAngle);
                 }
             }
 
@@ -824,7 +825,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         long TIMESLEEP = 100;
         int ticsPerMotor = (1120);
         double circumference = 12.125;
-        double ticsPerInch = ticsPerMotor / circumference;
+        double ticsPerInch = (ticsPerMotor / circumference) / 2;
         double startPos = frontRightDriveMotor.getCurrentPosition();
 
         int target = ((int)(targetInches * ticsPerInch));
@@ -919,7 +920,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         int ticsPerMotor = (1120);
         double circumference = 12.125;
         double ticsMultiple = 1.2;
-        double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple);
+        double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple) / 2;
         double startPos = frontRightDriveMotor.getCurrentPosition();
 
         int target = ((int)(targetInches * ticsPerInch));
@@ -999,7 +1000,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
 
         double ticsPerMotor = 1120;
         double degreesPerRotation = 48;
-        double ticsToMove = (degrees * ticsPerMotor) / degreesPerRotation;
+        double ticsToMove = ((degrees * ticsPerMotor) / degreesPerRotation) / 2;
         int FLtarget;
         int FRtarget;
         int BLtarget;
@@ -1057,7 +1058,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
         // direction false => backward
         int ticsPerMotor = 1120;
         double circumference = 12.125;
-        double ticsPerInch = ticsPerMotor / circumference;
+        double ticsPerInch = (ticsPerMotor / circumference) / 2;
         int FLtarget;
         int FRtarget;
         int BLtarget;
@@ -1117,7 +1118,7 @@ public class AutoBlueSkystoneParkFar extends LinearOpMode {
             // direction false => left
             double ticsPerMotor = 1120;
             double circumference = 12.125;
-            double ticsPerInch = ticsPerMotor / circumference;
+            double ticsPerInch = (ticsPerMotor / circumference) / 2;
 
             int FLtarget;
             int FRtarget;

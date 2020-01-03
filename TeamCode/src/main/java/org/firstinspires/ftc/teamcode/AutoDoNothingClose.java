@@ -160,10 +160,10 @@ public class AutoDoNothingClose extends LinearOpMode {
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        frontLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        backLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        backRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
 
         capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
@@ -587,7 +587,7 @@ public class AutoDoNothingClose extends LinearOpMode {
         long TIMESLEEP = 100;
         int ticsPerMotor = (1120);
         double circumference = 12.125;
-        double ticsPerInch = ticsPerMotor / circumference;
+        double ticsPerInch = (ticsPerMotor / circumference) / 2;
         double startPos = frontRightDriveMotor.getCurrentPosition();
 
         int target = ((int)(targetInches * ticsPerInch));
@@ -682,7 +682,7 @@ public class AutoDoNothingClose extends LinearOpMode {
         int ticsPerMotor = (1120);
         double circumference = 12.125;
         double ticsMultiple = 1.2;
-        double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple);
+        double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple) / 2;
         double startPos = frontRightDriveMotor.getCurrentPosition();
 
         int target = ((int)(targetInches * ticsPerInch));
@@ -762,7 +762,7 @@ public class AutoDoNothingClose extends LinearOpMode {
 
         double ticsPerMotor = 1120;
         double degreesPerRotation = 48;
-        double ticsToMove = (degrees * ticsPerMotor) / degreesPerRotation;
+        double ticsToMove = ((degrees * ticsPerMotor) / degreesPerRotation) / 2;
         int FLtarget;
         int FRtarget;
         int BLtarget;
@@ -820,7 +820,7 @@ public class AutoDoNothingClose extends LinearOpMode {
         // direction false => backward
         int ticsPerMotor = 1120;
         double circumference = 12.125;
-        double ticsPerInch = ticsPerMotor / circumference;
+        double ticsPerInch = (ticsPerMotor / circumference) / 2;
         int FLtarget;
         int FRtarget;
         int BLtarget;
@@ -880,7 +880,7 @@ public class AutoDoNothingClose extends LinearOpMode {
         // direction false => left
         double ticsPerMotor = 1120;
         double circumference = 12.125;
-        double ticsPerInch = ticsPerMotor / circumference;
+        double ticsPerInch = (ticsPerMotor / circumference) / 2;
 
         int FLtarget;
         int FRtarget;

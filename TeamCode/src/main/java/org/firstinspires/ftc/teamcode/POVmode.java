@@ -155,10 +155,10 @@ public class POVmode extends LinearOpMode {
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        frontLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
-        backLeftDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        backRightDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
 
         clawFingersServo.setPosition(FINGERS_OPEN);
@@ -218,9 +218,6 @@ public class POVmode extends LinearOpMode {
                 }
             }
 
-
-
-
             double powerflD = (mY * -driveMultiple);
             double powerfrD = (mY * -driveMultiple);
             double powerblD = (mY * -driveMultiple);
@@ -277,6 +274,15 @@ public class POVmode extends LinearOpMode {
                     deliveryServoLeft.setPosition(DELIVERY_LEFT_OPEN_FULLY);
                     deliveryServoRight.setPosition(DELIVERY_RIGHT_OPEN_FULLY);
             }
+            /*if ((deliveryServoLeft.getPosition() == DELIVERY_LEFT_OPEN_FULLY) && (gamepad1.right_trigger > 0)){
+                lastPosLeft = DELIVERY_SERVO_IN_LEFT;
+                lastPosRight = DELIVERY_SERVO_IN_RIGHT;
+                deliveryServoLeft.setPosition(lastPosLeft);
+                deliveryServoRight.setPosition(lastPosRight);
+            }else if ((gamepad1.right_trigger == 0) && (!gamepad1.x) && (lastPosLeft == DELIVERY_SERVO_IN_LEFT)){
+                deliveryServoLeft.setPosition(DELIVERY_LEFT_OPEN_FULLY);
+                deliveryServoRight.setPosition(DELIVERY_RIGHT_OPEN_FULLY);
+            }*/
 
             //DRIVER 2 : Gamepad 2 controls
 
