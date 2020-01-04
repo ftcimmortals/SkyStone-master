@@ -50,7 +50,8 @@ public class POVmode extends LinearOpMode {
     private BNO055IMU imu;
 
     // Constants
-    final private double SLOW_DRIVE_MULTIPLE = 0.5;
+    final private double SLOW_DRIVE_MULTIPLE = 0.3;
+    final private double MID_DRIVE_MULTIPLE = 0.5;
     final private double FAST_DRIVE_MULTIPLE = 1;
     final private double WRIST_TURN_MULTIPLE = 0.005;       // multiple for wrist turn fine tuning
     final private double ARM_EXTEND_MULTIPLE = 0.5;         // multiple for arm extend
@@ -65,12 +66,12 @@ public class POVmode extends LinearOpMode {
     final private double FOUNDATION_GRABBER_UP = 1;         // grabber up
 
 
-    final private double DELIVERY_LEFT_OPEN_FULLY = 0.885;
-    final private double DELIVERY_RIGHT_OPEN_FULLY = 0.09;
-    final private double DELIVERY_SERVO_IN_LEFT = 0.475;
-    final private double DELIVERY_SERVO_IN_RIGHT = 0.475;
-    final private double DELIVERY_SERVO_LEFT_IN_A_LITTLE = 0.8;
-    final private double DELIVERY_SERVO_RIGHT_IN_A_LITTLE = 0.2;
+    final private double DELIVERY_LEFT_OPEN_FULLY = 0.36;
+    final private double DELIVERY_RIGHT_OPEN_FULLY = 0.6;
+    final private double DELIVERY_SERVO_IN_LEFT = 0.9;
+    final private double DELIVERY_SERVO_IN_RIGHT = 0.05;
+    final private double DELIVERY_SERVO_LEFT_IN_A_LITTLE = 0.55;
+    final private double DELIVERY_SERVO_RIGHT_IN_A_LITTLE = 0.45;
 
     final private double CAPSTONE_NOT_DROPPED = 1;
     final private double CAPSTONE_DROPPED = 0;
@@ -181,10 +182,14 @@ public class POVmode extends LinearOpMode {
         frontRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
-
+        frontLeftDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRightDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeftDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRightDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         int tester = 0;
 
         boolean runProgram = false;
+        String speedState = "SLOW";
 
         double lastPosLeft = DELIVERY_SERVO_IN_LEFT;
         double lastPosRight = DELIVERY_SERVO_IN_RIGHT;
@@ -211,12 +216,19 @@ public class POVmode extends LinearOpMode {
 
             if((!currentDrive) && (lastDrive)) {
                 if(driveMultiple == SLOW_DRIVE_MULTIPLE) {
-                    driveMultiple = FAST_DRIVE_MULTIPLE;
+                    driveMultiple = MID_DRIVE_MULTIPLE;
+                    speedState = "MEDIUM";
                 }
-                else if (driveMultiple == FAST_DRIVE_MULTIPLE) {
+                else if (driveMultiple == MID_DRIVE_MULTIPLE) {
+                    driveMultiple = FAST_DRIVE_MULTIPLE;
+                    speedState = "FAST";
+                }
+                else if (driveMultiple == FAST_DRIVE_MULTIPLE){
                     driveMultiple = SLOW_DRIVE_MULTIPLE;
+                    speedState = "SLOW";
                 }
             }
+
 
             double powerflD = (mY * -driveMultiple);
             double powerfrD = (mY * -driveMultiple);
@@ -458,14 +470,7 @@ public class POVmode extends LinearOpMode {
             }
 
 
-            //            }*/
-            //
-            //
-            //            // reset power to all motors
-            frontLeftDriveMotor.setPower(0.0);
-            frontRightDriveMotor.setPower(0.0);
-            backLeftDriveMotor.setPower(0.0);
-            backRightDriveMotor.setPower(0.0);
+
 
 
             // telemetry only below here ...
@@ -491,6 +496,7 @@ public class POVmode extends LinearOpMode {
             //  telemetry.addData("foundationGrabberServo: ", foundationGrabberServoValue);
             //  telemetry.addData("Battery", this.hardwareMap.voltageSensor.iterator().next().getVoltage());*/
             telemetry.addData("Target Position: ", targetPosition);
+            telemetry.addData("Current Speed: ", speedState);
           /*  telemetry.addData("Current: ", currentPosition);
             telemetry.addData("Tester: ", tester);
             telemetry.addData("height", height);

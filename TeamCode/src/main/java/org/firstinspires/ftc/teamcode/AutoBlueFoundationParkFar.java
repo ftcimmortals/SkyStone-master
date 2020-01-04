@@ -123,8 +123,8 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
     final private double WRIST_TURN_VERTICAL = 0.05;         // wrist turn for vertical block
     final private double FOUNDATION_GRABBER_DOWN = 0.40;    // grabber down
     final private double FOUNDATION_GRABBER_UP = 1;         // grabber up
-    final private double DELIVERY_SERVO_IN = 0.5;
-    // State used for updating telemetry
+    final private double DELIVERY_SERVO_IN_LEFT = 0.9;
+    final private double DELIVERY_SERVO_IN_RIGHT = 0.05;    // State used for updating telemetry
     Orientation angles;
     Acceleration gravity;
 
@@ -170,8 +170,8 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
         stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
         stoneServoRed.setPosition(STONE_PICKER_CLOSED_RED);
         foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
-        deliveryServoLeft.setPosition(DELIVERY_SERVO_IN);
-        deliveryServoRight.setPosition(DELIVERY_SERVO_IN);
+        deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
+        deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
 
 
 
@@ -196,9 +196,6 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
 
-        // Set up our telemetry dashboard
-        composeTelemetry();
-
         // Wait until we're told to go
         waitForStart();
         runtime.reset();
@@ -212,7 +209,7 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
 
         // Loop and update the dashboard
         if (opModeIsActive()) {
-            double startAngle = angles.firstAngle;
+            double startAngle = getAngle();
             //0.02, 0.0009, 0.00009
             moveForwardInches(0.2,false,10);
             moveSideInches(0.1,false,33);
@@ -238,175 +235,7 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
     // Telemetry Configuration
     //----------------------------------------------------------------------------------------------
 
-    void composeTelemetry () {
-
-        // At the beginning of each telemetry update, grab a bunch of data
-        // from the IMU that we will then display in separate lines.
-        telemetry.addAction(new Runnable() {
-            @Override
-            public void run() {
-                // Acquiring the angles is relatively expensive; we don't want
-                // to do that in each of the three items that need that info, as that's
-                // three times the necessary expense.
-                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-                gravity = imu.getGravity();
-            }
-        });
-
-        telemetry.addLine()
-                .addData("status", new Func<String>() {
-                    @Override
-                    public String value() {
-                        return imu.getSystemStatus().toShortString();
-                    }
-                })
-                .addData("calib", new Func<String>() {
-                    @Override
-                    public String value() {
-                        return imu.getCalibrationStatus().toString();
-                    }
-                });
-
-        telemetry.addLine()
-                .addData("heading", new Func<String>() {
-                    @Override
-                    public String value() {
-                        return formatAngle(angles.angleUnit, angles.firstAngle);
-                    }
-                })
-                .addData("roll", new Func<String>() {
-                    @Override
-                    public String value() {
-                        return formatAngle(angles.angleUnit, angles.secondAngle);
-                    }
-                })
-                .addData("pitch", new Func<String>() {
-                    @Override
-                    public String value() {
-                        return formatAngle(angles.angleUnit, angles.thirdAngle);
-                    }
-                });
-
-        telemetry.addLine()
-                .addData("grvty", new Func<String>() {
-                    @Override
-                    public String value() {
-                        return gravity.toString();
-                    }
-                })
-                .addData("mag", new Func<String>() {
-                    @Override
-                    public String value() {
-                        return String.format(Locale.getDefault(), "%.3f",
-                                Math.sqrt(gravity.xAccel * gravity.xAccel
-                                        + gravity.yAccel * gravity.yAccel
-                                        + gravity.zAccel * gravity.zAccel));
-                    }
-                });
-
-    }
-
-    //----------------------------------------------------------------------------------------------
-    // Formatting
-    //----------------------------------------------------------------------------------------------
-
-    String formatAngle (AngleUnit angleUnit,double angle){
-        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
-    }
-
-    String formatDegrees ( double degrees){
-        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
-    }
-
-
-    public void PIDstraightTime ( double gainP, double gainI, double gainD, double initSpeed,
-                                  double direction, double targetTime){
-        double timeLast = 0;
-        double reference1 = angles.firstAngle;
-        double Ilast = 0;
-        double errorlast = 0;
-        double P;
-        double I;
-        double D;
-        double dT;
-        double output;
-        double Kp = gainP;
-        double Ki = gainI;
-        double Kd = gainD;
-        double timeNow;
-        double poL;
-        double poR;
-        double error;
-        double anglenow;
-        double refTime = getRuntime();
-        double elapsedTime = 0;
-        long TIMESLEEP = 100;
-
-        while ((elapsedTime < targetTime) && opModeIsActive()) {
-
-            sleep(TIMESLEEP);
-
-            // calculate time
-            timeNow = getRuntime();
-            elapsedTime = timeNow - refTime;
-            dT = timeNow - timeLast;
-
-            // P
-            anglenow = angles.firstAngle;
-            error = anglenow - reference1;
-            P = error;
-            // I
-            I = Ilast + (error * dT);
-            // D
-            D = (error - errorlast) / dT;
-
-            output = ((Kp * P) + (Ki * I) + (Kd * D));
-
-            if (output < 0) {
-                poL = -output;
-                poR = output;
-                if (poR < -0.8) {
-                    poR = -0.8;
-                }
-                if (poL > 0.8) {
-                    poL = 0.8;
-                }
-            } else {
-                poL = -output;
-                poR = output;
-                if (poL < -0.8) {
-                    poL = -0.8;
-                }
-                if (poR > 0.8) {
-                    poR = 0.8;
-                }
-            }
-
-            frontLeftDriveMotor.setPower(-initSpeed * direction + poL);
-            frontRightDriveMotor.setPower(-initSpeed * direction + poR);
-            backLeftDriveMotor.setPower(-initSpeed * direction + poL);
-            backRightDriveMotor.setPower(-initSpeed * direction + poR);
-
-            Ilast = I;
-            errorlast = error;
-            timeLast = timeNow;
-
-            telemetry.addData("PoL: ", poL);
-            telemetry.addData("PoR: ", poR);
-            telemetry.addData("error: ", error);
-            telemetry.addData("output: ", output);
-            telemetry.addData("P: ", P);
-            telemetry.addData("I: ", I);
-            telemetry.addData("D: ", D);
-            telemetry.addData("Time that's passed: ", elapsedTime);
-            telemetry.update();
-
-        }
-
-    }
-
-    public void PIDturn ( double gainP, double gainI, double gainD, double reference1,
-                          double maxpower){
+    public void PIDturn(double gainP, double gainI, double gainD, double reference1, double maxpower) {
         double timeLast = 0;
         double Ilast = 0;
         double errorlast = 0;
@@ -423,12 +252,11 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
         double timeNow;
         double poL;
         double poR;
-        double error = reference1 - angles.firstAngle;
-        double anglenow;
+        double anglenow = getAngle();
+        double error = reference1 - anglenow;
         double refTime = getRuntime();
         double elapsedTime = 0;
         long TIMESLEEP = 100;
-
 
         while ((absolute(error) > 0.5) && opModeIsActive()) {
 
@@ -440,7 +268,7 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
             dT = timeNow - timeLast;
 
             // P
-            anglenow = angles.firstAngle;
+            anglenow = getAngle();
             error = anglenow - reference1;
             P = error;
             // I
@@ -450,9 +278,9 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
 
             outputPID = ((Kp * P) + (Ki * I) + (Kd * D));
             outputPD = ((Kp * P) + (Kd * D));
-            if (absolute(error) < 6.0) {
+            if (absolute(error) < 6.0){
                 output = outputPID;
-            } else {
+            }else{
                 output = outputPD;
             }
 
@@ -498,89 +326,7 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
         }
 
     }
-    public void PIDsideTime ( double gainP, double gainI, double gainD, double initSpeed,
-                              double direction, double targetTime){
-        double timeLast = 0;
-        double reference1 = angles.firstAngle;
-        double Ilast = 0;
-        double errorlast = 0;
-        double P;
-        double I;
-        double D;
-        double dT;
-        double output;
-        double Kp = gainP;
-        double Ki = gainI;
-        double Kd = gainD;
-        double timeNow;
-        double poL;
-        double poR;
-        double error;
-        double anglenow;
-        double refTime = getRuntime();
-        double elapsedTime = 0;
-        long TIMESLEEP = 100;
-        while ((elapsedTime < targetTime) && opModeIsActive()) {
 
-            sleep(TIMESLEEP);
-
-            // calculate time
-            timeNow = getRuntime();
-            elapsedTime = timeNow - refTime;
-            dT = timeNow - timeLast;
-
-            // P
-            anglenow = angles.firstAngle;
-            error = anglenow - reference1;
-            P = error;
-            // I
-            I = Ilast + (error * dT);
-            // D
-            D = (error - errorlast) / dT;
-
-            output = ((Kp * P) + (Ki * I) + (Kd * D));
-
-            if (output < 0) {
-                poL = -output;
-                poR = output;
-                if (poR < -0.8) {
-                    poR = -0.8;
-                }
-                if (poL > 0.8) {
-                    poL = 0.8;
-                }
-            } else {
-                poL = -output;
-                poR = output;
-                if (poL < -0.8) {
-                    poL = -0.8;
-                }
-                if (poR > 0.8) {
-                    poR = 0.8;
-                }
-            }
-
-            frontLeftDriveMotor.setPower(-initSpeed * direction + poL);
-            frontRightDriveMotor.setPower(initSpeed * direction + poR);
-            backLeftDriveMotor.setPower(initSpeed * direction + poL);
-            backRightDriveMotor.setPower(-initSpeed * direction + poR);
-
-            Ilast = I;
-            errorlast = error;
-            timeLast = timeNow;
-
-            telemetry.addData("PoL: ", poL);
-            telemetry.addData("PoR: ", poR);
-            telemetry.addData("error: ", error);
-            telemetry.addData("output: ", output);
-            telemetry.addData("P: ", P);
-            telemetry.addData("I: ", I);
-            telemetry.addData("D: ", D);
-            telemetry.addData("Time that's passed: ", elapsedTime);
-            telemetry.update();
-
-        }
-    }
     public void PIDstraightInches(double gainP, double gainI, double gainD, double initSpeed, int direction, double targetInches, double reference1) {
         double timeLast = 0;
         double Ilast = 0;
@@ -598,6 +344,7 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
         double poR;
         double error;
         double anglenow;
+        anglenow = getAngle();
         double refTime = getRuntime();
         double elapsedTime = 0;
         long TIMESLEEP = 100;
@@ -628,7 +375,7 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
             dT = timeNow - timeLast;
 
             // P
-            anglenow = angles.firstAngle;
+            anglenow = getAngle();
             error = anglenow - reference1;
             P = error;
             // I
@@ -664,12 +411,15 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
 
             telemetry.addData("PoL: ", poL);
             telemetry.addData("PoR: ", poR);
+            telemetry.addData("angleNOW",anglenow);
+            telemetry.addData("reference1", reference1);
             telemetry.addData("error: ", error);
             telemetry.addData("output: ", output);
             telemetry.addData("P: ", P);
             telemetry.addData("I: ", I);
             telemetry.addData("D: ", D);
             telemetry.addData("Time that's passed: ", elapsedTime);
+            telemetry.addData("dT", dT);
             telemetry.update();
 
         }
@@ -723,7 +473,7 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
             dT = timeNow - timeLast;
 
             // P
-            anglenow = angles.firstAngle;
+            anglenow = getAngle();
             error = anglenow - reference1;
             P = error;
             // I
@@ -955,6 +705,12 @@ public class AutoBlueFoundationParkFar extends LinearOpMode {
 
         return (0);
 
+    }
+
+    public double getAngle()
+    {
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        return angles.firstAngle;
     }
 
     public double absolute(double inputval) {

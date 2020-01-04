@@ -32,67 +32,38 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
-import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
-import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
-
 /**
- * {@link AutoBlueFoundationParkClose} gives a short demo on how to use the BNO055 Inertial Motion Unit (IMU) from AdaFruit.
+ * {@link TestPID} gives a short demo on how to use the BNO055 Inertial Motion Unit (IMU) from AdaFruit.
  *
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  *
  * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
  */
-@Autonomous(name = "B-F-Close", group = "Concept")
+@Autonomous(name = "(test)PID 2", group = "Sensor")
 //@Disabled                            // Comment this out to add to the opmode list
-public class AutoBlueFoundationParkClose extends LinearOpMode {
+public class TestPID2 extends LinearOpMode {
     //----------------------------------------------------------------------------------------------
     // State
     //----------------------------------------------------------------------------------------------
-
-    final private double FINGERS_OPEN = 0.05;               // open claw
-    final private double FINGERS_CLOSED = 0.5;              //close claw
-    final private double GAIN_P = 0.02;
-    final private double GAIN_I = 0.0009;
-    final private double GAIN_D = 0.00009;
-
-    /**
-     * This is the webcam we are to use. As with other hardware devices such as motors and
-     * servos, this device is identified using the robot configuration tool in the FTC application.
-     */
-    WebcamName webcamName = null;
 
     // The IMU sensor object
     BNO055IMU imu;
@@ -101,30 +72,6 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
     private DcMotor frontRightDriveMotor = null;
     private DcMotor backLeftDriveMotor = null;
     private DcMotor backRightDriveMotor = null;
-    private DcMotor armRotateMotor = null;
-    private DcMotor armExtendMotor = null;
-    private Servo stoneServoRed = null;                    // place holder
-    private Servo stoneServoBlue = null;
-    private Servo clawWristServo = null;
-    private Servo clawFingersServo = null;
-    private Servo foundationGrabberServo = null;
-    private DigitalChannel armLimitTouchFront = null;
-    private DigitalChannel armLimitTouchBack = null;
-    private Servo capstoneServo = null;
-    private Servo deliveryServoLeft = null;
-    private Servo deliveryServoRight = null;
-    final private double STONE_PICKER_CLOSED_RED = 1;
-    final private double STONE_PICKER_CLOSED_BLUE = 0.1;
-    final private double STONE_PICKER_OPEN_RED = 0;
-    final private double STONE_PICKER_OPEN_BLUE = 1;
-    final private double CAPSTONE_NOT_DROPPED = 1;
-    final private double CAPSTONE_DROPPED = 0;
-    final private double WRIST_TURN_HORIZONTAL = 0.5;       // wrist turn for horizontal block
-    final private double WRIST_TURN_VERTICAL = 0.05;         // wrist turn for vertical block
-    final private double FOUNDATION_GRABBER_DOWN = 0.40;    // grabber down
-    final private double FOUNDATION_GRABBER_UP = 1;         // grabber up
-    final private double DELIVERY_SERVO_IN_LEFT = 0.9;
-    final private double DELIVERY_SERVO_IN_RIGHT = 0.05;
     // State used for updating telemetry
     Orientation angles;
     Acceleration gravity;
@@ -135,46 +82,15 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        webcamName = hardwareMap.get(WebcamName.class, "Webcam1");
-        // game controller #1
         frontLeftDriveMotor = hardwareMap.get(DcMotor.class, "front_left_drive");
         frontRightDriveMotor = hardwareMap.get(DcMotor.class, "front_right_drive");
         backLeftDriveMotor = hardwareMap.get(DcMotor.class, "back_left_drive");
         backRightDriveMotor = hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        // game controller #2
-        armRotateMotor = hardwareMap.get(DcMotor.class, "arm_rotate_motor");
-        armExtendMotor = hardwareMap.get(DcMotor.class, "arm_extend_motor");
-        stoneServoRed = hardwareMap.get(Servo.class, "stone_picker_red");
-        stoneServoBlue = hardwareMap.get(Servo.class, "stone_picker_blue");
-        clawWristServo = hardwareMap.get(Servo.class, "claw_wrist");
-        clawFingersServo = hardwareMap.get(Servo.class, "claw_fingers");
-        foundationGrabberServo = hardwareMap.get(Servo.class, "foundation_grabber");
-        deliveryServoLeft = hardwareMap.get(Servo.class, "delivery_servo_left");
-        deliveryServoRight = hardwareMap.get(Servo.class, "delivery_servo_right");
-
-        armLimitTouchFront = hardwareMap.get(DigitalChannel.class, "arm_limit_touch_front");
-        armLimitTouchBack = hardwareMap.get(DigitalChannel.class, "arm_limit_touch_back");
-        capstoneServo = hardwareMap.get(Servo.class, "capstone_servo");
-        armLimitTouchFront.setMode(DigitalChannel.Mode.INPUT);
-        armLimitTouchBack.setMode(DigitalChannel.Mode.INPUT);
-
-        // Most robots need the motor on one side to be reversed to drive forward
-        // Reverse the motor that runs backwards when connected directly to the battery
         frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
-
-        capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
-        stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
-        stoneServoRed.setPosition(STONE_PICKER_CLOSED_RED);
-        foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
-        deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
-        deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
-
-
 
         // Set up the parameters with which we will use our IMU. Note that integration
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
@@ -187,15 +103,16 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
-        clawFingersServo.setPosition(FINGERS_OPEN);
-        clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
-
-
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
+
+        frontLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // Wait until we're told to go
         waitForStart();
@@ -210,25 +127,14 @@ public class AutoBlueFoundationParkClose extends LinearOpMode {
         // Loop and update the dashboard
         if (opModeIsActive()) {
             double startAngle = getAngle();
-            //0.02, 0.0009, 0.00009
-            moveForwardInches(0.2,false,10);
-            moveSideInches(0.1,false,33);
             sleep(1000);
-            foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
-            sleep(1000);
-//            moveSideInches(0.5,true,60);
-            PIDsideInches(0.01, 0.00045, 0.000045, 0.2, 1, 60, startAngle);
-            sleep(1000);
-            foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
-            sleep(1000);
-            moveForwardInches(0.2,true,30);
-            moveSideInches(0.2,false,18);
-            moveForwardInches(0.2,false,18);
-            sleep(500);
-            moveForwardInches(0.2,true,3);
-            moveSideInches(0.2, true,20);
-            moveForwardInches(0.2,true,25);
+            //0.01, 0.00045, 0.000045
+            PIDstraightInches(0.01, 0.00045, 0.000045, 0.2, -1, 18, startAngle);
+            moveTurnDegrees(0.2, false, 90);
+            PIDstraightInches(0.01, 0.00045, 0.000045, 0.5, -1, 2000, startAngle+90);
+            //  stop();
         }
+
 
     }
 
