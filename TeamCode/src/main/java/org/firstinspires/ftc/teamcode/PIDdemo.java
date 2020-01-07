@@ -32,13 +32,14 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -47,20 +48,27 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
+import java.util.Locale;
 
-@Autonomous(name = "DN-Close", group = "Concept")
-//@Disabled                            // Comment this out to add to the opmode list
-public class AutoDoNothingClose extends CommonMethods {
+/**
+ *
+ * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
+ * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
+ *
+ * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
+ */
+@Autonomous(name = "(demo)PID", group = "Sensor")
+@Disabled                            // Comment this out to add to the opmode list
+public class PIDdemo extends CommonMethods {
     //----------------------------------------------------------------------------------------------
     // State
     //----------------------------------------------------------------------------------------------
-
-    WebcamName webcamName = null;
 
     // The IMU sensor object
     BNO055IMU imu;
     private ElapsedTime runtime = new ElapsedTime();
 
+    // State used for updating telemetry
     Orientation angles;
     Acceleration gravity;
 
@@ -69,26 +77,17 @@ public class AutoDoNothingClose extends CommonMethods {
     //----------------------------------------------------------------------------------------------
 
     @Override
-    public void runOpMode(){
+    public void runOpMode() {
         Hardware hardware = new Hardware(hardwareMap);
 
-        hardware.armLimitTouchFront.setMode(DigitalChannel.Mode.INPUT);
-        hardware.armLimitTouchBack.setMode(DigitalChannel.Mode.INPUT);
         hardware.frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         hardware.frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         hardware.backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         hardware.backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
-        hardware.armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
 
-
-        hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
-        hardware.stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
-        hardware.stoneServoRed.setPosition(STONE_PICKER_CLOSED_RED);
-        hardware.foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
-        hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
-        hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
-
-
+        // Set up the parameters with which we will use our IMU. Note that integration
+        // algorithm here just reports accelerations to the logcat log; it doesn't actually
+        // provide positional information.
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
@@ -97,27 +96,38 @@ public class AutoDoNothingClose extends CommonMethods {
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
-        hardware.clawFingersServo.setPosition(FINGERS_OPEN);
-        hardware.clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
-
-
-
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
         hardware.imu.initialize(parameters);
 
+        hardware.frontLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        hardware.frontRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        hardware.backLeftDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        hardware.backRightDriveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        // Wait until we're told to go
         waitForStart();
         runtime.reset();
-
 
         angles = hardware.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         gravity = hardware.imu.getGravity();
 
         // Start the logging of measured acceleration
-        hardware.imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+
         // Loop and update the dashboard
         if (opModeIsActive()) {
-            moveForwardInches(0.3, false, 16, hardware);
+            double startAngle = getAngle(hardware);
+            sleep(1000);
+            //0.01, 0.00045, 0.000045
+            PIDstraightInches(0.02, 0.00045, 0.00009, 0.2, -1, 12, startAngle, hardware);
+            moveTurnDegrees(0.2, -1, 90, hardware);
+            PIDstraightInches(0.02, 0.00045, 0.00009, 0.5, -1,60, startAngle + 90, hardware);
+            //  stop();
         }
+
+
     }
 
-   }
+}
