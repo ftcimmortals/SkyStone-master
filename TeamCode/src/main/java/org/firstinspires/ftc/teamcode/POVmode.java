@@ -242,6 +242,7 @@ public class POVmode extends CommonMethods {
                 hardware.deliveryServoRight.setPosition(DELIVERY_RIGHT_OPEN_FULLY);
             }
 
+            /*
             if(gamepad1.left_bumper){
                 hardware.deliveryServoLeft.setPosition(DELIVERY_LEFT_OPEN_FULLY);
                 hardware.deliveryServoRight.setPosition(DELIVERY_RIGHT_OPEN_FULLY);
@@ -249,10 +250,16 @@ public class POVmode extends CommonMethods {
             else if ((!gamepad1.left_bumper) && (lastPosLeft == DELIVERY_SERVO_IN_LEFT) && (!gamepad1.x)){
                 hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
                 hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
-            }
+            }*/
 
             currentRun = gamepad1.right_bumper;
             if((currentRun == false) && (lastRun == true)){
+                hardware.deliveryServoLeft.setPosition(DELIVERY_LEFT_OPEN_FULLY);
+                hardware.deliveryServoRight.setPosition(DELIVERY_RIGHT_OPEN_FULLY);
+                sleep(500);
+                hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
+                hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
+                sleep(500);
                 moveSideInches(0.2, true, 4, hardware);
             }
 
