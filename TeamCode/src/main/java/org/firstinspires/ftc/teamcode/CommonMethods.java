@@ -140,7 +140,7 @@ abstract public class CommonMethods extends LinearOpMode {
             blockDistance = hardware.sensorRed.getDistance(DistanceUnit.INCH);
         }
 
-        PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, blockDistance, reference1, hardware);
+        PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, blockDistance+1, reference1, hardware);
 
         sleep(500);
         if (RedBlue > 0) {
@@ -150,7 +150,7 @@ abstract public class CommonMethods extends LinearOpMode {
         }
         sleep(500);
 
-        PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 6, reference1, hardware);
+        PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 7, reference1, hardware);
         moveTurnDegrees(0.3, -1 * RedBlue, 90, hardware);
         PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 42 + deltaD, reference1 + (90 * RedBlue), hardware);
 
@@ -171,7 +171,7 @@ abstract public class CommonMethods extends LinearOpMode {
         }else{
             blockDistance = hardware.sensorRed.getDistance(DistanceUnit.INCH);
         }
-        PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1, blockDistance, reference1, hardware);
+        PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, blockDistance+1, reference1, hardware);
 
         sleep(500);
         if (RedBlue > 0) {
@@ -181,7 +181,7 @@ abstract public class CommonMethods extends LinearOpMode {
         }
         sleep(500);
 
-        PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 6, reference1, hardware);
+        PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 7, reference1, hardware);
         PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1 * RedBlue, 6, reference1, hardware);
         moveTurnDegrees(0.3, -1 * RedBlue, 90, hardware);
         PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 56 + deltaD, reference1 + (90*RedBlue), hardware);
@@ -286,7 +286,7 @@ abstract public class CommonMethods extends LinearOpMode {
             telemetry.update();
 
         }
-        sleep(200);
+        sleep(300);
 
     }
 
@@ -309,7 +309,8 @@ abstract public class CommonMethods extends LinearOpMode {
         double anglenow;
         double initSpeedUse;
         double distanceTraveled;
-        double minPower = 0.05;
+        double minPowerUp = 0.3;
+        double minPowerDown = 0.2;
         anglenow = getAngle(hardware);
         double refTime = getRuntime();
         double elapsedTime = 0;
@@ -365,20 +366,22 @@ abstract public class CommonMethods extends LinearOpMode {
             if (poR > 0.8) {
                 poR = 0.8;
             }
-            double rampdistance = 6;
+            double rampdistanceUp = 10;
+            double rampdistanceDown = 20;
 
             distanceTraveled = absolute((hardware.frontRightDriveMotor.getCurrentPosition() - startPos) / ticsPerInch);
-            if (targetInches > 2 * rampdistance){
-                if(distanceTraveled < rampdistance){
-                    initSpeedUse = (((maxPower - minPower) / rampdistance) * (distanceTraveled) + minPower);
-                }else if((distanceTraveled > rampdistance) && (distanceTraveled < (targetInches - rampdistance))){
+            if (targetInches > rampdistanceUp+rampdistanceDown){
+                if(distanceTraveled < rampdistanceUp){
+                    initSpeedUse = (((maxPower - minPowerUp) / rampdistanceUp) * (distanceTraveled) + minPowerUp);
+                }else if((distanceTraveled >= rampdistanceUp) && (distanceTraveled <= (targetInches - rampdistanceDown))){
                     initSpeedUse = maxPower;
                 }else{
-                    initSpeedUse = ((-(maxPower - minPower) / rampdistance) * (distanceTraveled - targetInches) + minPower);
+                    initSpeedUse = ((-(maxPower - minPowerDown) / rampdistanceDown) * (distanceTraveled - targetInches) + minPowerDown);
                 }
             }else{
                 initSpeedUse = maxPower;
             }
+
             hardware.frontLeftDriveMotor.setPower(initSpeedUse + poL);
             hardware.frontRightDriveMotor.setPower(initSpeedUse + poR);
             hardware.backLeftDriveMotor.setPower(initSpeedUse + poL);
@@ -388,6 +391,7 @@ abstract public class CommonMethods extends LinearOpMode {
             errorlast = error;
             timeLast = timeNow;
 
+            telemetry.addData("SpeedUse:", initSpeedUse);
             telemetry.addData("PoL: ", poL);
             telemetry.addData("PoR: ", poR);
             telemetry.addData("angleNOW",anglenow);
@@ -397,14 +401,13 @@ abstract public class CommonMethods extends LinearOpMode {
             telemetry.addData("P: ", P);
             telemetry.addData("I: ", I);
             telemetry.addData("D: ", D);
-            telemetry.addData("Time that's passed: ", elapsedTime);
-            telemetry.addData("dT", dT);
             telemetry.update();
         }
-        sleep(200);
+        sleep(300);
 
     }
-    public void PIDsideInches(double gainP, double gainI, double gainD, double initSpeed, int direction, double targetInches, double reference1, Hardware hardware) {
+
+    public void PIDsideInches(double gainP, double gainI, double gainD, double maxPower, int direction, double targetInches, double reference1, Hardware hardware) {
         double timeLast = 0;
         double Ilast = 0;
         double errorlast = 0;
@@ -425,6 +428,10 @@ abstract public class CommonMethods extends LinearOpMode {
         double elapsedTime = 0;
         long TIMESLEEP = 100;
         int ticsPerMotor = (1120);
+        double initSpeedUse;
+        double distanceTraveled;
+        double minPowerUp = 0.3;
+        double minPowerDown = 0.2;
         double circumference = 12.125;
         double ticsMultiple = 1.2;
         double ticsPerInch = ((ticsPerMotor / circumference) * ticsMultiple) / 2;
@@ -477,10 +484,26 @@ abstract public class CommonMethods extends LinearOpMode {
                 poF = 0.8;
             }
 
-            hardware.frontLeftDriveMotor.setPower(initSpeed + poF);
-            hardware.frontRightDriveMotor.setPower(initSpeed + poF);
-            hardware.backLeftDriveMotor.setPower(initSpeed + poB);
-            hardware.backRightDriveMotor.setPower(initSpeed + poB);
+            double rampdistanceUp = 10;
+            double rampdistanceDown = 20;
+
+            distanceTraveled = absolute((hardware.frontRightDriveMotor.getCurrentPosition() - startPos) / ticsPerInch);
+            if (targetInches > rampdistanceUp+rampdistanceDown){
+                if(distanceTraveled < rampdistanceUp){
+                    initSpeedUse = (((maxPower - minPowerUp) / rampdistanceUp) * (distanceTraveled) + minPowerUp);
+                }else if((distanceTraveled >= rampdistanceUp) && (distanceTraveled <= (targetInches - rampdistanceDown))){
+                    initSpeedUse = maxPower;
+                }else{
+                    initSpeedUse = ((-(maxPower - minPowerDown) / rampdistanceDown) * (distanceTraveled - targetInches) + minPowerDown);
+                }
+            }else{
+                initSpeedUse = maxPower;
+            }
+
+            hardware.frontLeftDriveMotor.setPower(initSpeedUse + poF);
+            hardware.frontRightDriveMotor.setPower(initSpeedUse + poF);
+            hardware.backLeftDriveMotor.setPower(initSpeedUse + poB);
+            hardware.backRightDriveMotor.setPower(initSpeedUse + poB);
 
             Ilast = I;
             errorlast = error;
@@ -560,6 +583,7 @@ abstract public class CommonMethods extends LinearOpMode {
 
         return (0);
     }
+
     public double moveForwardInches(double wheelPower, boolean direction, double inches, Hardware hardware) {
         // direction true => forward
         // direction false => backward
@@ -608,17 +632,18 @@ abstract public class CommonMethods extends LinearOpMode {
 
         }
         while ((absolute(hardware.frontLeftDriveMotor.getCurrentPosition() - FLtarget) > ticksTol) && (absolute(hardware.frontRightDriveMotor.getCurrentPosition() - FRtarget) > ticksTol) && (absolute(hardware.backLeftDriveMotor.getCurrentPosition() - BLtarget) > ticksTol) && (absolute(hardware.backRightDriveMotor.getCurrentPosition() - BRtarget) > ticksTol) && (opModeIsActive())) {
-            poweruse = wheelPower + (((wheelPower - 0.5) / (starttics - FLtarget)) * ((hardware.frontLeftDriveMotor.getCurrentPosition() - starttics)));
-
+            //poweruse = wheelPower + (((wheelPower - 0.5) / (starttics - FLtarget)) * ((hardware.frontLeftDriveMotor.getCurrentPosition() - starttics)));
+            poweruse = wheelPower;
             hardware.frontLeftDriveMotor.setPower(poweruse);
             hardware.frontRightDriveMotor.setPower(poweruse);
             hardware.backLeftDriveMotor.setPower(poweruse);
             hardware.backRightDriveMotor.setPower(poweruse);
             sleep(25);
         }
-        sleep(200);
+        sleep(300);
         return (0);
     }
+
     public double moveSideInches(double wheelPower, boolean direction, double inches, Hardware hardware) {
 
         // direction true => right
@@ -672,7 +697,8 @@ abstract public class CommonMethods extends LinearOpMode {
 
         }
         while ((absolute(hardware.frontLeftDriveMotor.getCurrentPosition() - FLtarget) > ticksTol) && (absolute(hardware.frontRightDriveMotor.getCurrentPosition() - FRtarget) > ticksTol) && (absolute(hardware.backLeftDriveMotor.getCurrentPosition() - BLtarget) > ticksTol) && (absolute(hardware.backRightDriveMotor.getCurrentPosition() - BRtarget) > ticksTol) && (opModeIsActive())) {
-            poweruse = wheelPower + (((wheelPower - 0.5) / (starttics - FLtarget)) * ((hardware.frontLeftDriveMotor.getCurrentPosition() - starttics)));
+            //poweruse = wheelPower + (((wheelPower - 0.5) / (starttics - FLtarget)) * ((hardware.frontLeftDriveMotor.getCurrentPosition() - starttics)));
+            poweruse = wheelPower;
 
             hardware.frontLeftDriveMotor.setPower(poweruse);
             hardware.frontRightDriveMotor.setPower(poweruse);
@@ -680,7 +706,7 @@ abstract public class CommonMethods extends LinearOpMode {
             hardware.backRightDriveMotor.setPower(poweruse);
             sleep(25);
         }
-        sleep(200);
+        sleep(300);
 
         return (0);
 

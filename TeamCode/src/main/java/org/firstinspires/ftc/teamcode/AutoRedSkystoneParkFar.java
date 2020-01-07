@@ -243,11 +243,11 @@ public class AutoRedSkystoneParkFar extends CommonMethods {
         if (opModeIsActive()) {
             double startAngle = getAngle(hardware);
             //0.02, 0.0009, 0.00009
-            PIDstraightInches(GAIN_P,GAIN_I,GAIN_D, 0.2, -1, 18, startAngle, hardware);
+            PIDstraightInches(GAIN_P,GAIN_I,GAIN_D, 0.3, -1, 18, startAngle, hardware);
             sleep(500);
             for (int ii = 0; ii < 2; ii++) {
                 VuforiaTrackable trackable = allTrackables.get(0);
-                sleep(500);
+                sleep(300);
                 if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
                     telemetry.addData("Visible Target", trackable.getName());
                     targetVisible = true;
@@ -281,7 +281,7 @@ public class AutoRedSkystoneParkFar extends CommonMethods {
                 PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.2, -1 * RB, 8, startAngle, hardware);
                 for (int ii = 0; ii < 2; ii++) {
                     VuforiaTrackable trackable = allTrackables.get(0);
-                    sleep(500);
+                    sleep(300);
                     if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
                         telemetry.addData("Visible Target", trackable.getName());
                         targetVisible = true;

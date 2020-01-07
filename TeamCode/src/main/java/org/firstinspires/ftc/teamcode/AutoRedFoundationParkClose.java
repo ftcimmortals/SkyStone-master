@@ -132,8 +132,9 @@ public class AutoRedFoundationParkClose extends CommonMethods {
         if (opModeIsActive()) {
             double startAngle = getAngle(hardware);
 
-            moveForwardInches(0.2,true,10, hardware);
-            moveSideInches(0.1,false,33, hardware);
+            moveForwardInches(0.3,true,11, hardware);
+            moveSideInches(0.3,false,23, hardware);
+            moveSideInches(0.2,false,10, hardware);
             sleep(1000);
             hardware.foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
             sleep(1000);
@@ -141,14 +142,15 @@ public class AutoRedFoundationParkClose extends CommonMethods {
             sleep(1000);
             hardware.foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
             sleep(1000);
-            moveForwardInches(0.2,false,36, hardware);
-            moveSideInches(0.2,false,18, hardware);
+            moveForwardInches(0.2,false,37, hardware);
+            moveSideInches(0.2,false,16, hardware);
             moveTurnDegrees(0.3, -1, 180, hardware);
             moveForwardInches(0.2,false,24, hardware);
             sleep(500);
             moveForwardInches(0.2,true,3, hardware);
-            moveSideInches(0.2, false,20, hardware);
-            moveForwardInches(0.2,true,25, hardware);
+            moveSideInches(0.3, false,20, hardware);
+            moveForwardInches(0.3,true,25, hardware);
+
         }
 
     }

@@ -116,7 +116,8 @@ public class AutoDoNothingClose extends CommonMethods {
         hardware.imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
         // Loop and update the dashboard
         if (opModeIsActive()) {
-            moveForwardInches(0.3, false, 16, hardware);
+            double angleStart = getAngle(hardware);
+            PIDstraightInches(0.02, 0.00045,0.00009, 0.5, -1, 72, angleStart, hardware);
         }
     }
 
