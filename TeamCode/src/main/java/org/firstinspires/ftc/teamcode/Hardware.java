@@ -43,19 +43,22 @@ public class Hardware {
 
     BNO055IMU imu = null;
     WebcamName webcamName = null;
-    public DistanceSensor sensorBlue = null;
-    public DistanceSensor sensorRed = null;
+    public DistanceSensor sensorLeft = null;
+    public DistanceSensor sensorRight = null;
     public DcMotor frontLeftDriveMotor = null;
     public DcMotor frontRightDriveMotor = null;
     public DcMotor backLeftDriveMotor = null;
     public DcMotor backRightDriveMotor = null;
     public DcMotor armRotateMotor = null;
     public DcMotor armExtendMotor = null;
-    public Servo stoneServoRed = null;                    // place holder
-    public Servo stoneServoBlue = null;
+    public Servo stoneServoRight = null;                    // place holder
+    public Servo stoneServoLeft = null;
+    public Servo smallStoneServoRight = null;                    // place holder
+    public Servo smallStoneServoLeft = null;
     public Servo clawWristServo = null;
     public Servo clawFingersServo = null;
-    public Servo foundationGrabberServo = null;
+    public Servo foundationGrabberServoLeft = null;
+    public Servo foundationGrabberServoRight = null;
     public DigitalChannel armLimitTouchFront = null;
     public DigitalChannel armLimitTouchBack = null;
     public Servo capstoneServo = null;
@@ -74,15 +77,18 @@ public class Hardware {
         // game controller #2
         armRotateMotor = hardwareMap.dcMotor.get("arm_rotate_motor");
         armExtendMotor = hardwareMap.dcMotor.get("arm_extend_motor");
-        stoneServoRed = hardwareMap.servo.get( "stone_picker_red");
-        stoneServoBlue = hardwareMap.servo.get("stone_picker_blue");
+        stoneServoRight = hardwareMap.servo.get( "stone_picker_right");
+        stoneServoLeft = hardwareMap.servo.get("stone_picker_left");
+        smallStoneServoRight = hardwareMap.servo.get("small_stone_picker_right");
+        smallStoneServoLeft = hardwareMap.servo.get("small_stone_picker_left");
         clawWristServo = hardwareMap.servo.get("claw_wrist");
         clawFingersServo = hardwareMap.servo.get("claw_fingers");
-        foundationGrabberServo = hardwareMap.servo.get("foundation_grabber");
+        foundationGrabberServoLeft = hardwareMap.servo.get("foundation_servo_left");
+        foundationGrabberServoRight = hardwareMap.servo.get("foundation_servo_right");
         deliveryServoLeft = hardwareMap.servo.get("delivery_servo_left");
         deliveryServoRight = hardwareMap.servo.get("delivery_servo_right");
-        sensorBlue = hardwareMap.get(DistanceSensor.class, "distance_blue");
-        sensorRed = hardwareMap.get(DistanceSensor.class, "distance_red");
+        sensorLeft = hardwareMap.get(DistanceSensor.class, "distance_left");
+        sensorRight = hardwareMap.get(DistanceSensor.class, "distance_right");
 
         armLimitTouchFront = hardwareMap.digitalChannel.get("arm_limit_touch_front");
         armLimitTouchBack = hardwareMap.digitalChannel.get("arm_limit_touch_back");

@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -42,13 +43,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 
 @Autonomous(name = "(Demo)PID", group = "Concept")
-//@Disabled                            // Comment this out to add to the opmode list
+//@Disabled                           // Comment this out to add to the opmode list
 public class PIDdemo extends CommonMethods {
 
     WebcamName webcamName = null;
@@ -82,9 +84,12 @@ public class PIDdemo extends CommonMethods {
         hardware.armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
 
         hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
-        hardware.stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
-        hardware.stoneServoRed.setPosition(STONE_PICKER_CLOSED_RED);
-        hardware.foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
+        hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
+        hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
+        hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_DOWN);
+        hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_DOWN);
+        hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
+        hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
         hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
         hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
 
@@ -122,9 +127,10 @@ public class PIDdemo extends CommonMethods {
         hardware.imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
 
         // Loop and update the dashboard
+        double blockDistance;
         if (opModeIsActive()) {
             double startAngle = getAngle(hardware);
-            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 120, startAngle, hardware);
+            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 300, startAngle, hardware);
         }
 
     }

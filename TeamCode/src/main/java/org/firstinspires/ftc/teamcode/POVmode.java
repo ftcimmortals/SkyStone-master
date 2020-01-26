@@ -1,46 +1,12 @@
-/* Copyright (c) 2017 FIRST. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted (subject to the limitations in the disclaimer below) provided that
- * the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this list
- * of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright notice, this
- * list of conditions and the following disclaimer in the documentation and/or
- * other materials provided with the distribution.
- *
- * Neither the name of FIRST nor the names of its contributors may be used to endorse or
- * promote products derived from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
- * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-import com.qualcomm.robotcore.hardware.TouchSensor;
 
+/*This opmode is for driver controlled period*/
 
 @TeleOp(name="POV_Mode", group="Linear Opmode")
 // @Disabled
@@ -49,79 +15,82 @@ public class POVmode extends CommonMethods {
     // define IMU
     private BNO055IMU imu;
 
-    // Constants
+    //runtime
     private ElapsedTime runtime = new ElapsedTime();
 
-    // Motors
-
+    // Variables for toggling
     boolean currentState = false;
     boolean lastState = false;
     boolean currentRun = false;
+    boolean currentRun2 = false;
     boolean lastRun = false;
-
-    int currentPosition = 0;
-    int targetPosition = 0;
-    double numberToClear;
-    double driveMultipleSide0 = SLOW_DRIVE_MULTIPLE_SIDE;
-    double driveMultipleForward0 = SLOW_DRIVE_MULTIPLE_FORWARD;
-    double driveMultipleSide = SLOW_DRIVE_MULTIPLE_SIDE;
-    double driveMultipleForward = SLOW_DRIVE_MULTIPLE_FORWARD;
+    boolean lastRun2 = false;
+    boolean runProgram = false;
     boolean currentDrive = false;
     boolean lastDrive = false;
 
-    float theta = 0.0f;
+    //variables for levels
+    int currentPosition = 0;
+    int targetPosition = 0;
+    double numberToClear;
+    int armExtendPosition;
+
+    //speed variables
+    double driveMultipleSide0 = MID_DRIVE_MULTIPLE_SIDE;
+    double driveMultipleForward0 = MID_DRIVE_MULTIPLE_FORWARD;
+    double driveMultipleSide = MID_DRIVE_MULTIPLE_SIDE;
+    double driveMultipleForward = MID_DRIVE_MULTIPLE_FORWARD;
+
 
 
     @Override
     public void runOpMode() {
 
-        Hardware hardware = new Hardware(hardwareMap);
-        /* Initialize the hardware variables. Note that the strings used here as parameters
-            to 'get' must correspond to the names assigned during the robot configuration
-            step (using the FTC Robot Controller app on the phone). */
+        Hardware hardware = new Hardware(hardwareMap); //For hardware variables
 
-        // game controller #1
-
-        hardware.armLimitTouchFront.setMode(DigitalChannel.Mode.INPUT);
-        hardware.armLimitTouchBack.setMode(DigitalChannel.Mode.INPUT);
-
-        // Most robots need the motor on one side to be reversed to drive forward
-        // Reverse the motor that runs backwards when connected directly to the battery
+        //Directions for all motors
         hardware.frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         hardware.frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         hardware.backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         hardware.backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         hardware.armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
 
+        //set servos for init
         hardware.clawFingersServo.setPosition(FINGERS_OPEN);
         hardware.clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
-        hardware.foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);      //set grabber position at init
+        hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
+        hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
         hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
-
-        hardware.armLimitTouchFront.setMode(DigitalChannel.Mode.INPUT);
-        hardware.armLimitTouchBack.setMode(DigitalChannel.Mode.INPUT);
-
-        int armExtendPosition;
-        hardware.armExtendMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset encoder at init
-        hardware.armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
-        hardware.stoneServoBlue.setPosition(STONE_PICKER_CLOSED_BLUE);
-        hardware.stoneServoRed.setPosition(STONE_PICKER_CLOSED_RED);
-        hardware.foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
+        hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
+        hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
+        hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_DOWN);
+        hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_DOWN);
+        hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
+        hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
         hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
         hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
-        int extendMotorStartPos = hardware.armExtendMotor.getCurrentPosition();
-        int rotateMotorStartPos = hardware.armRotateMotor.getCurrentPosition();
 
+        //set mode for encoders and touch sensors
+        hardware.armLimitTouchFront.setMode(DigitalChannel.Mode.INPUT);
+        hardware.armLimitTouchBack.setMode(DigitalChannel.Mode.INPUT);
+        hardware.armExtendMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        hardware.armRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        //set start position for extend motor
+        int extendMotorStartPos = hardware.armExtendMotor.getCurrentPosition();
+
+        //set motors to break when stopped
         hardware.frontLeftDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         hardware.frontRightDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         hardware.backLeftDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         hardware.backRightDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        int tester = 0;
+        hardware.armRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        boolean runProgram = false;
-        String speedState = "SLOW";
+        //Set strings for telemetry usage
+        String speedState = "MEDIUM";
+        String armReset = "NO";
 
+        //set last positions for servos
         double lastPosLeft = DELIVERY_SERVO_IN_LEFT;
         double lastPosRight = DELIVERY_SERVO_IN_RIGHT;
 
@@ -129,82 +98,103 @@ public class POVmode extends CommonMethods {
         waitForStart();
         runtime.reset();
 
-        // Setup a variable for each drive wheel to save power level for telemetry
-
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            double x = hardware.armRotateMotor.getCurrentPosition() / TICS_PER_DEGREE;
-            double MultFactor = 1 /*((-((MAX_FACTOR/135)) * x) + MAX_FACTOR)*/;
+            //set factor for robot drift
+            double MultFactor = 1;
 
             // DRIVER 1 : Gamepad 1 controls
 
+            //set controls for the gamepads
             double turn = gamepad1.right_stick_x;
             double mY = gamepad1.left_stick_y;
             double mX = gamepad1.left_stick_x;
 
+            //when y is pressed set current drive
             currentDrive = gamepad1.y;
 
+            //if y is let go
             if((!currentDrive) && (lastDrive)) {
+                //and it is slow
                 if(speedState == "SLOW") {
+                    //set to medium speed
                     driveMultipleSide0 = MID_DRIVE_MULTIPLE_SIDE;
                     driveMultipleForward0 = MID_DRIVE_MULTIPLE_FORWARD;
                     speedState = "MEDIUM";
                 }
+                //if it is medium
                 else if (speedState == "MEDIUM") {
+                    //set to fast speed
                     driveMultipleSide0 = FAST_DRIVE_MULTIPLE_SIDE;
                     driveMultipleForward0 = FAST_DRIVE_MULTIPLE_FORWARD;
                     speedState = "FAST";
                 }
+                //if it is fast speed
                 else if (speedState == "FAST"){
+                    //set to slow speed
                     driveMultipleSide0 = SLOW_DRIVE_MULTIPLE_SIDE;
                     driveMultipleForward0 = SLOW_DRIVE_MULTIPLE_FORWARD;
                     speedState = "SLOW";
                 }
             }
+            //if it is fast
             if (speedState == "FAST") {
+                //and trigger is pressed
                 if (gamepad1.right_trigger > 0) {
+                    //set to running slower
                     driveMultipleSide = driveMultipleSide0 * 0.3;
                     driveMultipleForward = driveMultipleForward0 * 0.3;
                 }else{
+                    //set to normal
                     driveMultipleSide = driveMultipleSide0;
                     driveMultipleForward = driveMultipleForward0;
                 }
+                //if it is slow or medium
             } else {
+                //and trigger is pressed
                 if (gamepad1.right_trigger > 0) {
+                    //set to running slower
                     driveMultipleSide = driveMultipleSide0 * 0.5;
                     driveMultipleForward = driveMultipleForward0 * 0.5;
                 }else{
+                    //set to normal
                     driveMultipleSide = driveMultipleSide0;
                     driveMultipleForward = driveMultipleForward0;
                 }
             }
 
+            //set mode for drive motor encoders to run with power set
             hardware.frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             hardware.frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             hardware.backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             hardware.backRightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+            //drive powers are the gamepad left stick y values times the drive multiple
             double powerflD = (mY * -driveMultipleForward);
             double powerfrD = (mY * -driveMultipleForward);
             double powerblD = (mY * -driveMultipleForward);
             double powerbrD = (mY * -driveMultipleForward);
 
+            //side powers are the gamepad left stick x values times the side drive multiple
             double powerflS = (mX * driveMultipleSide);
             double powerfrS = (mX * -driveMultipleSide);
-            double powerblS = ((mX * -driveMultipleSide) * MultFactor);
-            double powerbrS = ((mX * driveMultipleSide) * MultFactor);
+            double powerblS = ((mX * -driveMultipleSide) * MultFactor); //use multFactor for drift
+            double powerbrS = ((mX * driveMultipleSide) * MultFactor); //use multFactor for drift
 
+            //add side and drive powers for diagonal possibility
             double powerfl = powerflS + powerflD;
             double powerfr = powerfrS + powerfrD;
             double powerbl = powerblS + powerblD;
             double powerbr = powerbrS + powerbrD;
 
+            //set powers
             hardware.frontLeftDriveMotor.setPower(powerfl);
             hardware.frontRightDriveMotor.setPower(powerfr);
             hardware.backLeftDriveMotor.setPower(powerbl);
             hardware.backRightDriveMotor.setPower(powerbr);
 
+            //if it is turning set power to right stick y values
             if (turn != 0) {
                 hardware.frontLeftDriveMotor.setPower(-turn * driveMultipleSide);
                 hardware.backRightDriveMotor.setPower(turn * driveMultipleSide);
@@ -212,69 +202,83 @@ public class POVmode extends CommonMethods {
                 hardware.frontRightDriveMotor.setPower(turn * driveMultipleSide);
             }
 
+            //set foundation grabber positions
             if (gamepad1.dpad_up) {
-                hardware.foundationGrabberServo.setPosition(FOUNDATION_GRABBER_UP);
+                hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
+                hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
             }
             if (gamepad1.dpad_down) {
-                hardware.foundationGrabberServo.setPosition(FOUNDATION_GRABBER_DOWN);
+                hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_DOWN);
+                hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_DOWN);
             }
 
-
+            //set delivery servos to open
             if (gamepad1.x) {
                 lastPosLeft = DELIVERY_LEFT_OPEN_FULLY;
                 lastPosRight = DELIVERY_RIGHT_OPEN_FULLY;
                 hardware.deliveryServoLeft.setPosition(lastPosLeft);
                 hardware.deliveryServoRight.setPosition(lastPosRight);
             }
+
+            //set delivery servos to closed
             if (gamepad1.b) {
                 lastPosLeft = DELIVERY_SERVO_IN_LEFT;
                 lastPosRight = DELIVERY_SERVO_IN_RIGHT;
                 hardware.deliveryServoLeft.setPosition(lastPosLeft);
                 hardware.deliveryServoRight.setPosition(lastPosRight);
             }
+
+            //if trigger is pressed and it's open, close for pickup
             if ((hardware.deliveryServoLeft.getPosition() == DELIVERY_LEFT_OPEN_FULLY) && (gamepad1.left_trigger > 0)){
                 lastPosLeft = DELIVERY_SERVO_LEFT_IN_A_LITTLE;
                 lastPosRight = DELIVERY_SERVO_RIGHT_IN_A_LITTLE;
                 hardware.deliveryServoLeft.setPosition(lastPosLeft);
                 hardware.deliveryServoRight.setPosition(lastPosRight);
+
+             //if trigger is not pressed and it is not in, set to open
             }else if ((gamepad1.left_trigger == 0) && (!gamepad1.b) && (lastPosLeft != DELIVERY_SERVO_IN_LEFT)){
                 hardware.deliveryServoLeft.setPosition(DELIVERY_LEFT_OPEN_FULLY);
                 hardware.deliveryServoRight.setPosition(DELIVERY_RIGHT_OPEN_FULLY);
             }
 
-            /*
-            if(gamepad1.left_bumper){
-                hardware.deliveryServoLeft.setPosition(DELIVERY_LEFT_OPEN_FULLY);
+
+            //run alignment ('The dance') if bumper is let go
+            currentRun2 = gamepad1.left_bumper;
+            if((currentRun2 == false) && (lastRun2 == true)){
+                hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_RIGHT_FOR_ALIGNMENT);
+                moveSideInches(0.2, false, 3, hardware);
                 hardware.deliveryServoRight.setPosition(DELIVERY_RIGHT_OPEN_FULLY);
-            }
-            else if ((!gamepad1.left_bumper) && (lastPosLeft == DELIVERY_SERVO_IN_LEFT) && (!gamepad1.x)){
+                moveForwardInches(0.2, false, 6, hardware);
+                lastPosLeft = DELIVERY_SERVO_IN_LEFT;
+                lastPosRight = DELIVERY_SERVO_IN_RIGHT;
                 hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
                 hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
-            }*/
-
-            currentRun = gamepad1.right_bumper;
-            if((currentRun == false) && (lastRun == true)){
-                hardware.deliveryServoLeft.setPosition(DELIVERY_LEFT_OPEN_FULLY);
-                hardware.deliveryServoRight.setPosition(DELIVERY_RIGHT_OPEN_FULLY);
-                sleep(500);
-                hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
-                hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
-                sleep(500);
-                moveSideInches(0.2, true, 4, hardware);
+                sleep(100);
+                moveSideInches(0.2, true, 6, hardware);
             }
 
+            //close capstone servo when back is pressed
+            if (gamepad1.back) {
+                hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
+            }
             //DRIVER 2 : Gamepad 2 controls
 
+            //add to counter when a is pressed
             currentState = gamepad2.a;
             if ((!currentState) && (lastState)) {
                 targetPosition++;
             }
+            //if x is pressed, reset the level
             if (gamepad2.x) {
                 targetPosition = 0;
             }
+            //go to level if y button is pressed
             if (gamepad2.y) {
                 runProgram = true;
+                hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
+                hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
             }
+
             double height;
             double heightsq;
             double basesq;
@@ -285,82 +289,83 @@ public class POVmode extends CommonMethods {
             double ticsPerBlock;
 
             if (targetPosition == 0) {
-                numberToClear = 5.5;
-                height = (targetPosition * 4) + numberToClear;
-                heightsq = Math.pow(height, 2);
-                basesq = Math.pow(BASE_ARM_LENGTH, 2);
-                hypotenuse = Math.sqrt(heightsq + basesq);
-                angleInRadians = Math.asin(height / hypotenuse);
-                angleInDegrees = angleInRadians * (180 / Math.PI);
-                ticsToMove = angleInDegrees * TICS_PER_DEGREE;
-                currentPosition = 0;
+                //setting level for zero
+                numberToClear = 7.5; //number to pass block
+                height = (targetPosition * 4) + numberToClear; //height of triangle
+                heightsq = Math.pow(height, 2); //square for pythagorean
+                basesq = Math.pow(BASE + 1.5, 2); //square base of triangle for pythagorean
+                hypotenuse = Math.sqrt(heightsq + basesq); //square root of the values squared to find the hypotenuse
+                angleInRadians = Math.asin(height / hypotenuse);//find the angle by using inverse sin
+                angleInDegrees = angleInRadians * (180 / Math.PI);//convert to degrees
+                ticsToMove = angleInDegrees * TICS_PER_DEGREE;//convert to tics using tics per degree
+                currentPosition = 0;//set current level to zero
             } else {
-                numberToClear = 1.5;
-                height = (targetPosition * 4) + numberToClear;
-                heightsq = Math.pow(height, 2);
-                basesq = Math.pow(BASE_ARM_LENGTH, 2);
-                hypotenuse = Math.sqrt(heightsq + basesq);
-                angleInRadians = Math.asin(height / hypotenuse);
-                angleInDegrees = angleInRadians * (180 / Math.PI);
-                ticsToMove = angleInDegrees * TICS_PER_DEGREE;
-                ticsPerBlock = (ticsToMove / 4) - 2;
-                currentPosition = (int) (hardware.armRotateMotor.getCurrentPosition() / ticsPerBlock);
+                //setting level for the rest
+                numberToClear = 2.5;//number to pass block
+                height = (targetPosition * 4) + numberToClear;//height of triangle
+                heightsq = Math.pow(height, 2);//square for pythagorean
+                basesq = Math.pow(BASE, 2);//square base of triangle for pythagorean
+                hypotenuse = Math.sqrt(heightsq + basesq);//square root of the values squared to find the hypotenuse
+                angleInRadians = Math.asin(height / hypotenuse);//find the angle by using the inverse sin
+                angleInDegrees = angleInRadians * (180 / Math.PI);//convert to degrees
+                ticsToMove = angleInDegrees * TICS_PER_DEGREE;//convert to tics using tics per degree
+                ticsPerBlock = (ticsToMove / 4) - numberToClear;//calculate tics per block
+                currentPosition = (int) (hardware.armRotateMotor.getCurrentPosition() / ticsPerBlock);//set current level
             }
 
+            //if y is pressed
             if (runProgram) {
+                //if touch sensor is pressed
                 if (hardware.armLimitTouchFront.getState() == false) {
+                    //set position to the current position
                     hardware.armRotateMotor.setTargetPosition(hardware.armRotateMotor.getCurrentPosition());
                     hardware.armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     hardware.armRotateMotor.setPower(1.0);
                 }
 
-                double angleStart = (150 * TICS_PER_DEGREE);
 
                 //calculating current position
-                if ((hardware.armRotateMotor.getCurrentPosition()) <= ((ticsToMove - angleStart) - 50)) {
+                if ((hardware.armRotateMotor.getCurrentPosition()) <= ((ticsToMove - ANGLE_START) - 50)) {
                     // move arm up/down because arm is already contracted
                     if (hardware.armExtendMotor.getCurrentPosition() <= (extendMotorStartPos + 50)) {
                         // arm is contracted, move arm
-                        hardware.armRotateMotor.setTargetPosition((int)(ticsToMove- angleStart));
+                        hardware.armRotateMotor.setTargetPosition((int)(ticsToMove - ANGLE_START));
                         hardware.armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         hardware.armRotateMotor.setPower(1.0);
-                        tester = 1;
                     } else {
                         // contract arm before moving arm
                         hardware.armExtendMotor.setTargetPosition(extendMotorStartPos);
                         hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         hardware.armExtendMotor.setPower(0.3);
-                        tester = 2;
                     }
-                } else if ((hardware.armRotateMotor.getCurrentPosition()) >= ((ticsToMove - angleStart) + 50)) {
+                } else if ((hardware.armRotateMotor.getCurrentPosition()) >= ((ticsToMove - ANGLE_START) + 50)) {
                     // move arm up/down because arm is already contracted
                     if (hardware.armExtendMotor.getCurrentPosition() <= (extendMotorStartPos + 50)) {
                         // arm is contracted, move arm
-                        hardware.armRotateMotor.setTargetPosition((int)(ticsToMove- angleStart));
+                        hardware.armRotateMotor.setTargetPosition((int)(ticsToMove- ANGLE_START));
                         hardware.armRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         hardware.armRotateMotor.setPower(1.0);
-                        tester = 3;
                     } else {
                         // contract arm before moving arm
                         hardware.armExtendMotor.setTargetPosition(extendMotorStartPos);
                         hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                         hardware.armExtendMotor.setPower(0.3);
-                        tester = 4;
                     }
                 } else {
                     // extend arm
                     double factorExtend;
+                    //calculate factors to add to extention because of spring tension
                     if ((targetPosition > 0) && (targetPosition < 4)){
                         factorExtend = 1.1;
                     }
                     else if (targetPosition == 4){
-                        factorExtend = 1.19;
+                        factorExtend = 1.18;
                     }
                     else if (targetPosition == 5){
-                        factorExtend = 1.21;
+                        factorExtend = 1.3;
                     }
                     else if (targetPosition == 6){
-                        factorExtend = 1.28;
+                        factorExtend = 1.4;
                     }
                     else if (targetPosition == 7){
                         factorExtend = 1.32;
@@ -371,29 +376,33 @@ public class POVmode extends CommonMethods {
                     else{
                         factorExtend = 1;
                     }
-                    double hypotenuseWithFactor = (hypotenuse * factorExtend);
-                    double deltaH = hypotenuseWithFactor - BASE_ARM_LENGTH;
-                    double rotationsOfArmExtension = deltaH / SPINDLE_CIRCUMFERENCE;
-                    int armExPos = 0;
+                    double hypotenuseWithFactor = (hypotenuse * factorExtend);//multiply hypotenuse by the factor
+                    double deltaH = hypotenuseWithFactor - ARM_LENGTH;//subtract arm length from hypotenuse to find how much to extend
+                    double rotationsOfArmExtension = deltaH / SPINDLE_CIRCUMFERENCE;//how many rotations of the spindle is needed to extend arm that much
+                    int armExPos = 0;//define arm extend position
 
-                    armExPos = (int) ((rotationsOfArmExtension * TICS_PER_ROTATION_EXTENTION_MOTOR));
+                    armExPos = (int) ((rotationsOfArmExtension * TICS_PER_ROTATION_EXTENTION_MOTOR));//set tics needed to move
+                    //go to calculated position
                     hardware.armExtendMotor.setTargetPosition(armExPos);
                     hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     hardware.armExtendMotor.setPower(0.3);
-                    tester = 5;
-                    if (hardware.armExtendMotor.getCurrentPosition() >= armExPos - 50) {
+
+                    //stop running program if reached needed position
+                    if (absolute(hardware.armExtendMotor.getCurrentPosition()) >= absolute(armExPos) - 50) {
                         runProgram = false;
                     }
                 }
+                //if run program is false
             } else {
-                double armRotate = gamepad2.right_stick_y;          //Set multiples for rotating and extending the arm
+                //set controls for the gamepad
+                double armRotate = gamepad2.right_stick_y;
                 double armExtend = gamepad2.left_stick_y;
 
 
-                if ((armRotate > 0) && (hardware.armLimitTouchBack.getState() == true)) {                                // right stick y to rotate arm up
+                if ((armRotate > 0) && (hardware.armLimitTouchBack.getState() == true)) {      // right stick y to rotate arm up
                     hardware.armRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     hardware.armRotateMotor.setPower(armRotate);
-                } else if ((armRotate < 0) && (hardware.armLimitTouchFront.getState() == true)) {                           // right stick y to rotate arm down
+                } else if ((armRotate < 0) && (hardware.armLimitTouchFront.getState() == true)) {    // right stick y to rotate arm down
                     hardware.armRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     hardware.armRotateMotor.setPower(armRotate);
                 } else {
@@ -420,10 +429,10 @@ public class POVmode extends CommonMethods {
             if (gamepad2.left_bumper) {                         // left bumper to turn wrist left 90 degrees
                 hardware.clawWristServo.setPosition(WRIST_TURN_VERTICAL);
             }
-            if (gamepad2.right_trigger > 0) {                    // right trigger turn wrist right
+            if (gamepad2.right_trigger > 0) {                    // right trigger to fine tune turn wrist right
                 hardware.clawWristServo.setPosition(hardware.clawWristServo.getPosition() + (gamepad2.right_trigger * WRIST_TURN_MULTIPLE));
             }
-            if (gamepad2.left_trigger > 0) {                   // left trigger turn wrist left
+            if (gamepad2.left_trigger > 0) {                   // left trigger to fine tune turn wrist left
                 hardware.clawWristServo.setPosition(hardware.clawWristServo.getPosition() - (gamepad2.left_trigger * WRIST_TURN_MULTIPLE));
             }
             if (gamepad2.dpad_up) {                                   // y button on gamepad2 to close claw
@@ -432,49 +441,27 @@ public class POVmode extends CommonMethods {
             if (gamepad2.dpad_down) {                                   // a button on gamepad2 to open claw
                 hardware.clawFingersServo.setPosition(FINGERS_OPEN);
             }
-            if (gamepad2.back) {
+            if (gamepad2.back) {                                        //drop capstone if back is pressed
                 hardware.capstoneServo.setPosition(CAPSTONE_DROPPED);
             }
+            if(hardware.armLimitTouchBack.getState() == false){ //if touch sensor is pressed, change strings for telemetry
+                armReset = "YES";
+            }else{
+                armReset = "NO";
+            }
 
-
-
-
-
-            // telemetry only below here ...
-           /* telemetry.addData("Arm touch front: ", armLimitTouchFront.getState());
-            telemetry.addData("Arm touch Back: ", armLimitTouchBack.getState());
-            telemetry.addData("Arm extend position", armExtendMotor.getCurrentPosition());
-            telemetry.addData("mX: ", mX);
-            telemetry.addData("mY: ", mY);
-
-//            String frontLeftDriveMotorValue = frontLeftDriveMotor.getCurrentPosition() + ", " + frontLeftDriveMotor.getDirection() + ", " + frontLeftDriveMotor.getPower();
-//            telemetry.addData("frontLeftDriveMotor: ", frontLeftDriveMotorValue);
-//            String frontRightDriveMotorValue = frontRightDriveMotor.getCurrentPosition() + ", " + frontRightDriveMotor.getDirection() + ", " + frontRightDriveMotor.getPower();
-//            telemetry.addData("frontRightDriveMotor: ", frontRightDriveMotorValue);
-//            String backLeftDriveMotorValue = backLeftDriveMotor.getCurrentPosition() + ", " + backLeftDriveMotor.getDirection() + ", " + backLeftDriveMotor.getPower();
-//            telemetry.addData("backLeftDriveMotor: ", backLeftDriveMotorValue);
-//            String backRightDriveMotorValue = frontRightDriveMotor.getCurrentPosition() + ", " + frontRightDriveMotor.getDirection() + ", " + frontRightDriveMotor.getPower();
-//            telemetry.addData("backRightDriveMotor: ", backRightDriveMotorValue);
-            String armExtendMotorValue = armExtendMotor.getCurrentPosition() + ", " + armExtendMotor.getMode() + ", " + armExtendMotor.getDirection() + ", " + armExtendMotor.getPower();
-            telemetry.addData("armExtendMotor: ", armExtendMotorValue);
-            String armRotateMotorValue = armRotateMotor.getCurrentPosition() + ", " + armExtendMotor.getMode() + ", " + armRotateMotor.getDirection() + ", " + armRotateMotor.getPower();
-            telemetry.addData("armRotateMotor: ", armRotateMotorValue);
-            //  String foundationGrabberServoValue = Double.toString(foundationGrabberServo.getPosition());
-            //  telemetry.addData("foundationGrabberServo: ", foundationGrabberServoValue);
-            //  telemetry.addData("Battery", this.hardwareMap.voltageSensor.iterator().next().getVoltage());*/
+            //set telemetry
             telemetry.addData("Target Position: ", targetPosition);
             telemetry.addData("Current Speed: ", speedState);
-          /*  telemetry.addData("Current: ", currentPosition);
-            telemetry.addData("Tester: ", tester);
-            telemetry.addData("height", height);
-            telemetry.addData("hypotenuse", hypotenuse);
-            telemetry.addData("angle", angleInDegrees);
-            telemetry.addData("Tics To Move", ticsToMove);*/
+            telemetry.addData("Is the arm reset? ", armReset);
 
             telemetry.update();
+            //update boolean variables for one press buttons
             lastState = currentState;
             lastDrive = currentDrive;
             lastRun = currentRun;
+            lastRun2 = currentRun2;
+
         }
     }
 }
