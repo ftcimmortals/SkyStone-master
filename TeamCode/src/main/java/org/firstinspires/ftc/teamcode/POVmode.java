@@ -59,6 +59,7 @@ public class POVmode extends CommonMethods {
         hardware.clawFingersServo.setPosition(FINGERS_OPEN);
         hardware.clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
         hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
+        hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
         hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
         hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
         hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
@@ -301,7 +302,7 @@ public class POVmode extends CommonMethods {
                 currentPosition = 0;//set current level to zero
             } else {
                 //setting level for the rest
-                numberToClear = 2.5;//number to pass block
+                numberToClear = 3;//number to pass block
                 height = (targetPosition * 4) + numberToClear;//height of triangle
                 heightsq = Math.pow(height, 2);//square for pythagorean
                 basesq = Math.pow(BASE, 2);//square base of triangle for pythagorean
@@ -359,10 +360,10 @@ public class POVmode extends CommonMethods {
                         factorExtend = 1.1;
                     }
                     else if (targetPosition == 4){
-                        factorExtend = 1.18;
+                        factorExtend = 1.15;
                     }
                     else if (targetPosition == 5){
-                        factorExtend = 1.3;
+                        factorExtend = 1.22;
                     }
                     else if (targetPosition == 6){
                         factorExtend = 1.4;
