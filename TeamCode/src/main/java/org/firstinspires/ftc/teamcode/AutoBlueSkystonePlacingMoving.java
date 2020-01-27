@@ -163,7 +163,7 @@ public class AutoBlueSkystonePlacingMoving extends CommonMethods {
                 //go and align to foundation
                 PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 7, angleStart, hardware);
                 moveTurnDegrees(0.3, -1, 90, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 82, angleStart + 90, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 84, angleStart + 90, hardware);
                 moveTurnDegrees(0.3, 1, 90, hardware);
                 PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 5, angleStart, hardware);
                 foundationDistance = hardware.sensorLeft.getDistance(DistanceUnit.INCH);

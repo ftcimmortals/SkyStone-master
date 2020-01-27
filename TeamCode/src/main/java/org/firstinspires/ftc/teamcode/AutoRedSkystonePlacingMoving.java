@@ -217,7 +217,7 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
                 //go to and align with foundation
                 PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 7, angleStart, hardware);
                 moveTurnDegrees(0.3, 1, 90, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 82, angleStart - 90, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 83, angleStart - 90, hardware);
                 moveTurnDegrees(0.3, -1, 90, hardware);
                 PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 3, angleStart, hardware);
                 foundationDistance = hardware.sensorRight.getDistance(DistanceUnit.INCH);
@@ -257,7 +257,7 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_DOWN);
                 sleep(500);
                 //park
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, 1, 40, angleStart - 90, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, 1, 39, angleStart - 90, hardware);
             //third case
             } else {
                 //align with and pickup first stone

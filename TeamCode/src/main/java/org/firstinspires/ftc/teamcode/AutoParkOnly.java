@@ -50,9 +50,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 this autonomous mode just parks for a total of 5 points
  */
 
-@Autonomous(name = "DN-Close", group = "Concept")
+@Autonomous(name = "Park-Only", group = "Concept")
 //@Disabled
-public class AutoDoNothingClose extends CommonMethods {
+public class AutoParkOnly extends CommonMethods {
 
     // The IMU sensor object
     BNO055IMU imu;

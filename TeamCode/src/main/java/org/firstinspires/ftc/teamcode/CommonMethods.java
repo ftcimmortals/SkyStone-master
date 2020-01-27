@@ -64,7 +64,9 @@ abstract public class CommonMethods extends LinearOpMode {
     final public double STONE_PICKER_LEFT_DOWN = 0.8;//left big stone picker down
     final public double STONE_PICKER_LEFT_UP = 0;//right big stone picker up
     final public double STONE_PICKER_LEFT_PICKUP = 0.4;//big stone picker for pickup
-    final public double STONE_PICKER_RIGHT_DOWN = 0.85;//left big stone picker down
+    final public double STONE_PICKER_RIGHT_DOWN = 0.85;//right big stone picker down
+    final public double STONE_PICKER_RIGHT_DOWN_FULLY = 1;//right big stone picker down fully
+    final public double STONE_PICKER_LEFT_DOWN_FULLY = 1;//left big stone picker down fully
     final public double STONE_PICKER_RIGHT_UP = 0;//right big stone picker up
     final public double STONE_PICKER_RIGHT_PICKUP = 0.4;//big stone picker for pickup
 
@@ -188,16 +190,16 @@ abstract public class CommonMethods extends LinearOpMode {
                 if(distanceTraveled < rampdistanceUp){
                     //set power to increase
                     initSpeedUse = (((maxPower - minPowerUp) / rampdistanceUp) * (distanceTraveled) + minPowerUp);
-                //if it is in the second part of the trapezoid
+                    //if it is in the second part of the trapezoid
                 }else if((distanceTraveled >= rampdistanceUp) && (distanceTraveled <= (targetInches - rampdistanceDown))){
                     //set power to constant
                     initSpeedUse = maxPower;
-                //if it is in the third part of the trapezoid
+                    //if it is in the third part of the trapezoid
                 }else{
                     //set power to decrease
                     initSpeedUse = ((-(maxPower - minPowerDown) / rampdistanceDown) * (distanceTraveled - targetInches) + minPowerDown);
                 }
-            //if the distance cannot fit in the ramp
+                //if the distance cannot fit in the ramp
             }else{
                 //set to constant speed
                 initSpeedUse = maxPower;
@@ -330,16 +332,16 @@ abstract public class CommonMethods extends LinearOpMode {
                 if(distanceTraveled < rampdistanceUp){
                     //incrase speed
                     initSpeedUse = (((maxPower - minPowerUp) / rampdistanceUp) * (distanceTraveled) + minPowerUp);
-                //if it is in the second part of the ramp
+                    //if it is in the second part of the ramp
                 }else if((distanceTraveled >= rampdistanceUp) && (distanceTraveled <= (targetInches - rampdistanceDown))){
                     //remain at a constant speed
                     initSpeedUse = maxPower;
-                //if it is in the third part of the ramp
+                    //if it is in the third part of the ramp
                 }else{
                     //decrease speed
                     initSpeedUse = ((-(maxPower - minPowerDown) / rampdistanceDown) * (distanceTraveled - targetInches) + minPowerDown);
                 }
-            //if it is too small to fit in the ramp
+                //if it is too small to fit in the ramp
             }else{
                 //set to constant power
                 initSpeedUse = maxPower;
@@ -404,7 +406,7 @@ abstract public class CommonMethods extends LinearOpMode {
             hardware.backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             hardware.backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        //if turning left
+            //if turning left
         } else {
             //go to target position
             FLtarget = (int)(ticsToMove) + hardware.frontLeftDriveMotor.getCurrentPosition();
@@ -471,7 +473,7 @@ abstract public class CommonMethods extends LinearOpMode {
             hardware.backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             hardware.backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        //if going backward
+            //if going backward
         } else {
             //go to target (negative)
             FLtarget = (int) (-ticsPerInch * inches + hardware.frontLeftDriveMotor.getCurrentPosition());
@@ -538,7 +540,7 @@ abstract public class CommonMethods extends LinearOpMode {
             hardware.backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             hardware.backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        //if going backward
+            //if going backward
         } else {
             double sideMultiple = 1.2;//multiple for slippage while going sideways
 
@@ -611,7 +613,7 @@ abstract public class CommonMethods extends LinearOpMode {
                 hardware.backLeftDriveMotor.setPower(directionForward * outsidePower);
                 hardware.backRightDriveMotor.setPower(directionForward * insidePower);
             }
-        //if turning right
+            //if turning right
         } else {
             //go to target position
             hardware.frontLeftDriveMotor.setTargetPosition(hardware.frontLeftDriveMotor.getCurrentPosition() + tics2);
@@ -646,40 +648,40 @@ abstract public class CommonMethods extends LinearOpMode {
             if(leftOrRight > 0){
                 //set both servos to down
                 hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_DOWN);
-                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_DOWN);
+                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_DOWN_FULLY);
                 sleep(500);
                 //go to position is set to down before the loop
                 double goToR = SMALL_STONE_PICKER_DOWN;
-                double goToR2 = STONE_PICKER_RIGHT_DOWN;
+                double goToR2 = STONE_PICKER_RIGHT_DOWN_FULLY;
                 //while the small picker is not at the target
                 while((goToR < SMALL_STONE_PICKER_PICKUP) && (opModeIsActive())){
                     //slowly change position to grab the block and pick it up
                     goToR = goToR + 0.05;
-                    goToR2 = goToR2 - 0.06;
+                    goToR2 = goToR2 - 0.04;
                     hardware.smallStoneServoRight.setPosition(goToR);
                     hardware.stoneServoRight.setPosition(goToR2);
                     sleep(50);
                 }
-            //if using left stone picker
+                //if using left stone picker
             } else if(leftOrRight < 0){
                 //set both servos to down
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_DOWN);
-                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_DOWN);
+                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_DOWN_FULLY);
                 sleep(500);
                 //go to position is set to down before the loop
                 double goToL = SMALL_STONE_PICKER_DOWN;
-                double goToL2 = STONE_PICKER_LEFT_DOWN;
+                double goToL2 = STONE_PICKER_LEFT_DOWN_FULLY;
                 //while the small picker is not at the target
                 while((goToL < SMALL_STONE_PICKER_PICKUP) && opModeIsActive()){
                     //slowly change position and grab the block and pick it up
                     goToL = goToL + 0.05;
-                    goToL2 = goToL2 - 0.06;
+                    goToL2 = goToL2 - 0.04;
                     hardware.smallStoneServoLeft.setPosition(goToL);
                     hardware.stoneServoLeft.setPosition(goToL2);
                     sleep(50);
                 }
             }
-        //if dropping the stones
+            //if dropping the stones
         } else if (pickOrDrop < 0){
             //if using right picker
             if(leftOrRight > 0){
@@ -699,7 +701,7 @@ abstract public class CommonMethods extends LinearOpMode {
                     hardware.stoneServoRight.setPosition(goToR2);
                     sleep(50);
                 }
-            //if using left picker
+                //if using left picker
             }else if(leftOrRight < 0){
                 //set positions to picking up the stone
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_PICKUP);
@@ -733,7 +735,7 @@ abstract public class CommonMethods extends LinearOpMode {
         if (inputval > 0) {
             //keep it the same
             return inputval;
-        //if it's negative
+            //if it's negative
         } else {
             //multiply by negative 1
             return -1 * inputval;

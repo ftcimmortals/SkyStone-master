@@ -50,7 +50,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 
 @Autonomous(name = "(Demo)PID", group = "Concept")
-//@Disabled                           // Comment this out to add to the opmode list
+@Disabled                           // Comment this out to add to the opmode list
 public class PIDdemo extends CommonMethods {
 
     WebcamName webcamName = null;
@@ -111,6 +111,7 @@ public class PIDdemo extends CommonMethods {
         hardware.clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
 
 
+
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
@@ -130,7 +131,10 @@ public class PIDdemo extends CommonMethods {
         double blockDistance;
         if (opModeIsActive()) {
             double startAngle = getAngle(hardware);
-            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.2, 1, 300, startAngle, hardware);
+            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 22, startAngle, hardware);
+            liftOrDropStones(-1, 1, hardware);
+            moveTurnDegrees(0.3, -1, 90, hardware);
+            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 300, startAngle + 90, hardware);
         }
 
     }
