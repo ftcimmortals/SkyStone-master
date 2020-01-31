@@ -51,6 +51,7 @@ public class Hardware {
     public DcMotor backRightDriveMotor = null;
     public DcMotor armRotateMotor = null;
     public DcMotor armExtendMotor = null;
+    public DcMotor tapeMotor = null;
     public Servo stoneServoRight = null;                    // place holder
     public Servo stoneServoLeft = null;
     public Servo smallStoneServoRight = null;                    // place holder
@@ -69,6 +70,7 @@ public class Hardware {
     Hardware(HardwareMap hardwareMap){
         webcamName = hardwareMap.get(WebcamName.class, "Webcam1");
         imu = hardwareMap.get(BNO055IMU.class, "imu");
+        tapeMotor = hardwareMap.dcMotor.get("tape_motor");
         // game controller #1
         frontLeftDriveMotor = hardwareMap.dcMotor.get("front_left_drive");
         frontRightDriveMotor = hardwareMap.dcMotor.get("front_right_drive");

@@ -33,10 +33,9 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
@@ -46,50 +45,59 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-/*
-this autonomous mode just parks for a total of 5 points
- */
 
-@Autonomous(name = "Park-Only", group = "Concept")
-//@Disabled
-public class AutoParkOnly extends CommonMethods {
+
+@Autonomous(name = "TapeTest", group = "Concept")
+//@Disabled                           // Comment this out to add to the opmode list
+public class TapeTest extends CommonMethods {
+
+    WebcamName webcamName = null;
 
     // The IMU sensor object
     BNO055IMU imu;
-    //init runtime
     private ElapsedTime runtime = new ElapsedTime();
 
-    //angles for imu
     Orientation angles;
     Acceleration gravity;
 
 
-    @Override
-    public void runOpMode(){
-        Hardware hardware = new Hardware(hardwareMap);//init hardware
+    //----------------------------------------------------------------------------------------------
+    // Main logic
+    //----------------------------------------------------------------------------------------------
 
-        //set mode of touch sensors
+    @Override
+    public void runOpMode() {
+        // game controller #1
+        Hardware hardware = new Hardware(hardwareMap);
+
         hardware.armLimitTouchFront.setMode(DigitalChannel.Mode.INPUT);
         hardware.armLimitTouchBack.setMode(DigitalChannel.Mode.INPUT);
-        //set direction of the motors
+
+        // Most robots need the motor on one side to be reversed to drive forward
+        // Reverse the motor that runs backwards when connected directly to the battery
         hardware.frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         hardware.frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         hardware.backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         hardware.backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         hardware.armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
-        //set servo position at init
+        hardware.tapeMotor.setDirection(DcMotor.Direction.REVERSE);
+
         hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
         hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
         hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
         hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
         hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
         hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
-        hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
+        hardware.foundationGrabberServoRight.setPosition(0.5);
         hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
         hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
-        hardware.clawFingersServo.setPosition(FINGERS_OPEN);
-        hardware.clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
-        //init imu
+
+
+
+        // Set up the parameters with which we will use our IMU. Note that integration
+        // algorithm here just reports accelerations to the logcat log; it doesn't actually
+        // provide positional information.
+
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
@@ -98,22 +106,44 @@ public class AutoParkOnly extends CommonMethods {
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
+        hardware.clawFingersServo.setPosition(FINGERS_OPEN);
+        hardware.clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
+
+
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
         hardware.imu.initialize(parameters);
-        //wait till start
+
+        // Wait until we're told to go
         waitForStart();
         runtime.reset();
-        //get angles and gravity values for imu
+
         angles = hardware.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         gravity = hardware.imu.getGravity();
 
         // Start the logging of measured acceleration
         hardware.imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+
+        int ticsPerMotor = (1440);//Tics of the drive motors
+        double circumference = 13.0;//Wheel circumference
+        double ticsPerInch = (ticsPerMotor / circumference);//tics per inch moved
+        double startPos = hardware.frontRightDriveMotor.getCurrentPosition();//start position of the otor
+
         // Loop and update the dashboard
+        double blockDistance;
         if (opModeIsActive()) {
-            double angleStart = getAngle(hardware);//set starting angle as reference angle
-            //park
-            PIDstraightInches(GAIN_P, GAIN_I,GAIN_D, 0.2, -1, 16, angleStart, hardware);
+            double startAngle = getAngle(hardware);
+//            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 22, startAngle, hardware);
+//            PIDsideInches(GAIN_P,GAIN_I,GAIN_D,0.5,1,22, startAngle, hardware);
+//            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 22, startAngle, hardware);
+            int tapeticstomove = (int) (48 * ticsPerInch);
+            hardware.tapeMotor.setTargetPosition(tapeticstomove + hardware.tapeMotor.getCurrentPosition());
+            hardware.tapeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            hardware.tapeMotor.setPower(1);
+            sleep(10000);
         }
+
     }
 
-   }
+}

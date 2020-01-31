@@ -50,6 +50,7 @@ abstract public class CommonMethods extends LinearOpMode {
     final public double FOUNDATION_GRABBER_LEFT_UP = 1;//grabber left up
     final public double FOUNDATION_GRABBER_RIGHT_UP = 0;//grabber right up
     final public double FOUNDATION_GRABBER_RIGHT_DOWN = 1;//grabber right down
+    final public double FOUNDATION_GRABBER_RIGHT_HALF = 0.1;//grabber right halfway for tape extention
 
     final public double DELIVERY_LEFT_OPEN_FULLY = 0.31;//delivery left open fully
     final public double DELIVERY_RIGHT_OPEN_FULLY = 0.65;//delivery right open fully
@@ -70,7 +71,8 @@ abstract public class CommonMethods extends LinearOpMode {
     final public double STONE_PICKER_RIGHT_UP = 0;//right big stone picker up
     final public double STONE_PICKER_RIGHT_PICKUP = 0.4;//big stone picker for pickup
 
-    final public double SMALL_STONE_PICKER_DOWN = 0;//small stone picker down
+    final public double SMALL_STONE_PICKER_LEFT_DOWN = 0.15;//small stone picker down
+    final public double SMALL_STONE_PICKER_RIGHT_DOWN = 0;//small stone picker down
     final public double SMALL_STONE_PICKER_PICKUP = 0.6;//small stone picker for pickup
 
     final public double CAPSTONE_NOT_DROPPED = 0.95;//capstone servo in
@@ -82,8 +84,10 @@ abstract public class CommonMethods extends LinearOpMode {
     final public double SPINDLE_CIRCUMFERENCE = (2.5 * (Math.PI));//circumference of the spindle
     final public double TICS_PER_ROTATION_ROTATION_MOTOR = 1425.2;//tics per rotations of the rotation motor
     final public double TICS_PER_ROTATION_EXTENTION_MOTOR = 537.6;//tics per rotations of the extention motor
+    final public double TICS_PER_ROTATION_TAPE = 480; // tics per rotations of the tape motor
     final public double TICS_PER_DEGREE = (TICS_PER_ROTATION_ROTATION_MOTOR * 24) / 360;//tics per degree of rotation
     final public double ANGLE_START = (150 * TICS_PER_DEGREE);//angle of arm when it's all the way back
+    final public double TAPE_WHEEL_CIRCUMFERENCE = 13;
 
     // State used for updating telemetry
     Orientation angles;
@@ -118,7 +122,7 @@ abstract public class CommonMethods extends LinearOpMode {
         anglenow = getAngle(hardware);//Current angle
         double refTime = getRuntime();//time at start
         double elapsedTime = 0;//time passed
-        long TIMESLEEP = 100;//Time to sleep for loop
+        long TIMESLEEP = 50;//Time to sleep for loop
         int ticsPerMotor = (1120);//Tics of the drive motors
         double circumference = 12.125;//Wheel circumference
         double ticsPerInch = (ticsPerMotor / circumference) / 2;//tics per inch moved
@@ -179,8 +183,10 @@ abstract public class CommonMethods extends LinearOpMode {
             }
 
             //set ramps
-            double rampdistanceUp = 16;
-            double rampdistanceDown = 16;
+            double rampdistanceUp = 10;
+            double rampdistanceDown = 5;
+            double slopeup = (minPowerUp - maxPower)/(0 - rampdistanceUp);
+            double slopedown = (maxPower - minPowerDown)/(0 - rampdistanceDown);
 
             //calculate distance till now
             distanceTraveled = absolute((hardware.frontRightDriveMotor.getCurrentPosition() - startPos) / ticsPerInch);
@@ -189,7 +195,7 @@ abstract public class CommonMethods extends LinearOpMode {
                 //if it is in the first part of the trapezoid
                 if(distanceTraveled < rampdistanceUp){
                     //set power to increase
-                    initSpeedUse = (((maxPower - minPowerUp) / rampdistanceUp) * (distanceTraveled) + minPowerUp);
+                    initSpeedUse = ((slopeup * distanceTraveled) + minPowerUp);
                     //if it is in the second part of the trapezoid
                 }else if((distanceTraveled >= rampdistanceUp) && (distanceTraveled <= (targetInches - rampdistanceDown))){
                     //set power to constant
@@ -197,12 +203,16 @@ abstract public class CommonMethods extends LinearOpMode {
                     //if it is in the third part of the trapezoid
                 }else{
                     //set power to decrease
-                    initSpeedUse = ((-(maxPower - minPowerDown) / rampdistanceDown) * (distanceTraveled - targetInches) + minPowerDown);
+                    initSpeedUse = ((slopedown) * (distanceTraveled - targetInches) + minPowerDown);
                 }
                 //if the distance cannot fit in the ramp
             }else{
-                //set to constant speed
-                initSpeedUse = maxPower;
+                //Compute triangle power evolution for distances less than rampup + rampdown
+                if (distanceTraveled < targetInches/2) {
+                    initSpeedUse = (slopeup * distanceTraveled) + minPowerUp;
+                }else{
+                    initSpeedUse = ((slopedown) * (distanceTraveled - targetInches) + minPowerDown);
+                }
             }
 
             //set powers
@@ -229,7 +239,129 @@ abstract public class CommonMethods extends LinearOpMode {
             telemetry.addData("D: ", D);
             telemetry.update();
         }
+        hardware.frontLeftDriveMotor.setPower(0);
+        hardware.frontRightDriveMotor.setPower(0);
+        hardware.backLeftDriveMotor.setPower(0);
+        hardware.backRightDriveMotor.setPower(0);
+    }
 
+    public void PIDstraightInchesNoRamp(double gainP, double gainI, double gainD, double maxPower, int direction, double targetInches, double reference1, Hardware hardware) {
+        //Function to move forward with PID
+        /*direction + => forward
+         direction - => backward*/
+        double timeLast = 0; //The last time recorded
+        double Ilast = 0;//The last integral value recorded
+        double errorlast = 0;//The last error recorded
+        double P;//Proportional
+        double I;//Integral
+        double D;//Derivative
+        double dT;//Change in time
+        double output;//Output of the controller
+        double Kp = gainP;//Gain for P
+        double Ki = gainI;//gain for I
+        double Kd = gainD;//Gain for D
+        double timeNow;//Current time
+        double poL;//Left power
+        double poR;//Right power
+        double error;//Error
+        double anglenow;//Current angle
+        double initSpeedUse;//Speed to add to
+        double distanceTraveled;//Distance traveled till now
+        double minPowerUp = 0.3;//Minimum power for ramp up
+        double minPowerDown = 0.2;//Minimum power for ramp down
+        anglenow = getAngle(hardware);//Current angle
+        double refTime = getRuntime();//time at start
+        double elapsedTime = 0;//time passed
+        long TIMESLEEP = 50;//Time to sleep for loop
+        int ticsPerMotor = (1120);//Tics of the drive motors
+        double circumference = 12.125;//Wheel circumference
+        double ticsPerInch = (ticsPerMotor / circumference) / 2;//tics per inch moved
+        double startPos = hardware.frontRightDriveMotor.getCurrentPosition();//start position of the otor
+
+        int target = ((int)(targetInches * ticsPerInch)); //Where to go
+
+        //go to target position for all the motors
+        hardware.frontRightDriveMotor.setTargetPosition(direction *(target)+ hardware.frontRightDriveMotor.getCurrentPosition());
+        hardware.frontLeftDriveMotor.setTargetPosition(direction *(target)+ hardware.frontLeftDriveMotor.getCurrentPosition());
+        hardware.backRightDriveMotor.setTargetPosition(direction *(target)+ hardware.backRightDriveMotor.getCurrentPosition());
+        hardware.backLeftDriveMotor.setTargetPosition(direction *(target)+ hardware.backLeftDriveMotor.getCurrentPosition());
+
+        hardware.frontRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        hardware.frontLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        hardware.backRightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        hardware.backLeftDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        //while we are not at position
+        while ((absolute((hardware.frontRightDriveMotor.getCurrentPosition() - startPos)) < (target) - 50) && opModeIsActive()) {
+
+            sleep(TIMESLEEP);
+
+            // calculate time
+            timeNow = getRuntime();
+            elapsedTime = timeNow - refTime;
+            dT = timeNow - timeLast;
+
+            // P
+            anglenow = getAngle(hardware);
+            error = anglenow - reference1;
+            P = error;
+            // I
+            I = Ilast + (error * dT);
+            // D
+            D = (error - errorlast) / dT;
+
+            //calculate output
+            output = ((Kp * P) + (Ki * I) + (Kd * D));
+
+            //power left to move
+            poL = -output * direction;
+            //power right to move
+            poR = output * direction;
+
+            //set max correction limits
+            if (poR < -0.8) {
+                poR = -0.8;
+            }
+            if (poL > 0.8) {
+                poL = 0.8;
+            }
+            if (poL < -0.8) {
+                poL = -0.8;
+            }
+            if (poR > 0.8) {
+                poR = 0.8;
+            }
+
+            initSpeedUse = maxPower;
+
+            //set powers
+            hardware.frontLeftDriveMotor.setPower(initSpeedUse + poL);
+            hardware.frontRightDriveMotor.setPower(initSpeedUse + poR);
+            hardware.backLeftDriveMotor.setPower(initSpeedUse + poL);
+            hardware.backRightDriveMotor.setPower(initSpeedUse + poR);
+
+            //set last powers
+            Ilast = I;
+            errorlast = error;
+            timeLast = timeNow;
+
+            //telemetry for testing
+            telemetry.addData("SpeedUse:", initSpeedUse);
+            telemetry.addData("PoL: ", poL);
+            telemetry.addData("PoR: ", poR);
+            telemetry.addData("angleNOW",anglenow);
+            telemetry.addData("reference1", reference1);
+            telemetry.addData("error: ", error);
+            telemetry.addData("output: ", output);
+            telemetry.addData("P: ", P);
+            telemetry.addData("I: ", I);
+            telemetry.addData("D: ", D);
+            telemetry.update();
+        }
+        hardware.frontLeftDriveMotor.setPower(0);
+        hardware.frontRightDriveMotor.setPower(0);
+        hardware.backLeftDriveMotor.setPower(0);
+        hardware.backRightDriveMotor.setPower(0);
     }
 
     public void PIDsideInches(double gainP, double gainI, double gainD, double maxPower, int direction, double targetInches, double reference1, Hardware hardware) {
@@ -255,7 +387,7 @@ abstract public class CommonMethods extends LinearOpMode {
         double anglenow;//current angle
         double refTime = getRuntime();//time at start
         double elapsedTime = 0;//time passed
-        long TIMESLEEP = 100;//time that we sleep
+        long TIMESLEEP = 50;//time that we sleep
         int ticsPerMotor = (1120);//tics per drive motor
         double initSpeedUse;//speed to use
         double distanceTraveled;//distance traveled till now
@@ -370,6 +502,11 @@ abstract public class CommonMethods extends LinearOpMode {
             telemetry.update();
 
         }
+        hardware.frontLeftDriveMotor.setPower(0);
+        hardware.frontRightDriveMotor.setPower(0);
+        hardware.backLeftDriveMotor.setPower(0);
+        hardware.backRightDriveMotor.setPower(0);
+
     }
 
     public double moveTurnDegrees(double wheelPower, int direction, double degrees, Hardware hardware) {
@@ -433,8 +570,12 @@ abstract public class CommonMethods extends LinearOpMode {
             hardware.frontRightDriveMotor.setPower(wheelPower);
             hardware.backLeftDriveMotor.setPower(wheelPower);
             hardware.backRightDriveMotor.setPower(wheelPower);
-            sleep(25);
         }
+        hardware.frontLeftDriveMotor.setPower(0);
+        hardware.frontRightDriveMotor.setPower(0);
+        hardware.backLeftDriveMotor.setPower(0);
+        hardware.backRightDriveMotor.setPower(0);
+
         return (0);
     }
 
@@ -500,9 +641,13 @@ abstract public class CommonMethods extends LinearOpMode {
             hardware.frontRightDriveMotor.setPower(poweruse);
             hardware.backLeftDriveMotor.setPower(poweruse);
             hardware.backRightDriveMotor.setPower(poweruse);
-            sleep(25);
         }
+        hardware.frontLeftDriveMotor.setPower(0);
+        hardware.frontRightDriveMotor.setPower(0);
+        hardware.backLeftDriveMotor.setPower(0);
+        hardware.backRightDriveMotor.setPower(0);
         return (0);
+
     }
 
     public double moveSideInches(double wheelPower, boolean direction, double inches, Hardware hardware) {
@@ -569,8 +714,11 @@ abstract public class CommonMethods extends LinearOpMode {
             hardware.frontRightDriveMotor.setPower(poweruse);
             hardware.backLeftDriveMotor.setPower(poweruse);
             hardware.backRightDriveMotor.setPower(poweruse);
-            sleep(25);
         }
+        hardware.frontLeftDriveMotor.setPower(0);
+        hardware.frontRightDriveMotor.setPower(0);
+        hardware.backLeftDriveMotor.setPower(0);
+        hardware.backRightDriveMotor.setPower(0);
         return (0);
 
     }
@@ -613,6 +761,10 @@ abstract public class CommonMethods extends LinearOpMode {
                 hardware.backLeftDriveMotor.setPower(directionForward * outsidePower);
                 hardware.backRightDriveMotor.setPower(directionForward * insidePower);
             }
+            hardware.frontLeftDriveMotor.setPower(0);
+            hardware.frontRightDriveMotor.setPower(0);
+            hardware.backLeftDriveMotor.setPower(0);
+            hardware.backRightDriveMotor.setPower(0);
             //if turning right
         } else {
             //go to target position
@@ -634,8 +786,13 @@ abstract public class CommonMethods extends LinearOpMode {
                 hardware.backLeftDriveMotor.setPower(insidePower);
                 hardware.backRightDriveMotor.setPower(outsidePower);
             }
+            hardware.frontLeftDriveMotor.setPower(0);
+            hardware.frontRightDriveMotor.setPower(0);
+            hardware.backLeftDriveMotor.setPower(0);
+            hardware.backRightDriveMotor.setPower(0);
         }
     }
+
     public void liftOrDropStones(double leftOrRight, double pickOrDrop, Hardware hardware){
         //left => -
         //right => +
@@ -647,11 +804,11 @@ abstract public class CommonMethods extends LinearOpMode {
             //if using right stone picker
             if(leftOrRight > 0){
                 //set both servos to down
-                hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_DOWN);
+                hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
                 hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_DOWN_FULLY);
                 sleep(500);
                 //go to position is set to down before the loop
-                double goToR = SMALL_STONE_PICKER_DOWN;
+                double goToR = SMALL_STONE_PICKER_RIGHT_DOWN;
                 double goToR2 = STONE_PICKER_RIGHT_DOWN_FULLY;
                 //while the small picker is not at the target
                 while((goToR < SMALL_STONE_PICKER_PICKUP) && (opModeIsActive())){
@@ -665,11 +822,11 @@ abstract public class CommonMethods extends LinearOpMode {
                 //if using left stone picker
             } else if(leftOrRight < 0){
                 //set both servos to down
-                hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_DOWN);
+                hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
                 hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_DOWN_FULLY);
                 sleep(500);
                 //go to position is set to down before the loop
-                double goToL = SMALL_STONE_PICKER_DOWN;
+                double goToL = SMALL_STONE_PICKER_LEFT_DOWN;
                 double goToL2 = STONE_PICKER_LEFT_DOWN_FULLY;
                 //while the small picker is not at the target
                 while((goToL < SMALL_STONE_PICKER_PICKUP) && opModeIsActive()){
@@ -693,7 +850,7 @@ abstract public class CommonMethods extends LinearOpMode {
                 double goToR = SMALL_STONE_PICKER_PICKUP;
                 double goToR2 = STONE_PICKER_RIGHT_PICKUP;
                 //while small picker is not at target
-                while((goToR > SMALL_STONE_PICKER_DOWN) && (opModeIsActive())){
+                while((goToR > SMALL_STONE_PICKER_RIGHT_DOWN) && (opModeIsActive())){
                     //slowly change position and let go of the block and lower it down
                     goToR = goToR - (0.05);
                     goToR2 = goToR2 + (0.04);
@@ -711,7 +868,7 @@ abstract public class CommonMethods extends LinearOpMode {
                 double goToL = SMALL_STONE_PICKER_PICKUP;
                 double goToL2 = STONE_PICKER_LEFT_PICKUP;
                 //while small picker is not at target
-                while((goToL > SMALL_STONE_PICKER_DOWN) && (opModeIsActive())){
+                while((goToL > SMALL_STONE_PICKER_LEFT_DOWN) && (opModeIsActive())){
                     //slowly change position and let go of the block and lower it down
                     goToL = goToL - (0.05);
                     goToL2 = goToL2 + (0.04);

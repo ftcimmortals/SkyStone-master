@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -54,6 +55,7 @@ public class POVmode extends CommonMethods {
         hardware.backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         hardware.backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         hardware.armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
+        hardware.tapeMotor.setDirection(DcMotor.Direction.REVERSE);
 
         //set servos for init
         hardware.clawFingersServo.setPosition(FINGERS_OPEN);
@@ -64,8 +66,8 @@ public class POVmode extends CommonMethods {
         hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
         hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
         hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
-        hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_DOWN);
-        hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_DOWN);
+        hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
+        hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
         hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
         hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
         hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
@@ -410,10 +412,10 @@ public class POVmode extends CommonMethods {
                     hardware.armRotateMotor.setPower(0.0);
                 }
 
-                if (armExtend > 0) {                                // left stick y to extend arm
+                if ((armExtend > 0) && (!gamepad2.b)){                                // left stick y to extend arm if b is not pressed
                     hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     hardware.armExtendMotor.setPower(-armExtend * ARM_EXTEND_MULTIPLE);
-                } else if (armExtend < 0) {                           // left stick y to collapse arm
+                } else if ((armExtend < 0) && (!gamepad2.b)) {                           // left stick y to collapse arm if b is not pressed
                     hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     hardware.armExtendMotor.setPower(-armExtend * ARM_EXTEND_MULTIPLE);
                 } else {
@@ -424,6 +426,12 @@ public class POVmode extends CommonMethods {
                 }
             }
 
+            if((gamepad2.b) && (gamepad2.left_stick_y != 0)){ //if b is pressed and the left stick is moved
+                hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_HALF);//move foundation grabber out of the way
+                    hardware.tapeMotor.setPower(gamepad2.left_stick_y);//set power to the stick value
+            }else{
+                hardware.tapeMotor.setPower(0);//stop motor
+            }
             if (gamepad2.right_bumper) {                        // right bumper to turn wrist right 90 degrees
                 hardware.clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
             }

@@ -34,6 +34,7 @@ import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -50,7 +51,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 
 @Autonomous(name = "(Demo)PID", group = "Concept")
-@Disabled                           // Comment this out to add to the opmode list
+//@Disabled                           // Comment this out to add to the opmode list
 public class PIDdemo extends CommonMethods {
 
     WebcamName webcamName = null;
@@ -86,8 +87,8 @@ public class PIDdemo extends CommonMethods {
         hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
         hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
         hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
-        hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_DOWN);
-        hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_DOWN);
+        hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
+        hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
         hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
         hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
         hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
@@ -111,7 +112,6 @@ public class PIDdemo extends CommonMethods {
         hardware.clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
 
 
-
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
@@ -132,9 +132,8 @@ public class PIDdemo extends CommonMethods {
         if (opModeIsActive()) {
             double startAngle = getAngle(hardware);
             PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 22, startAngle, hardware);
-            liftOrDropStones(-1, 1, hardware);
-            moveTurnDegrees(0.3, -1, 90, hardware);
-            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 300, startAngle + 90, hardware);
+            PIDsideInches(GAIN_P,GAIN_I,GAIN_D,0.5,1,22, startAngle, hardware);
+            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 22, startAngle, hardware);
         }
 
     }

@@ -105,8 +105,8 @@ public class POVmodeTest extends CommonMethods {
         hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
         hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
         hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
-        hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_DOWN);
-        hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_DOWN);
+        hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
+        hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
         hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
         hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
         hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
@@ -153,8 +153,8 @@ public class POVmodeTest extends CommonMethods {
             hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
         }
         if(gamepad1.a){
-            hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_DOWN);
-            hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_DOWN);
+            hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
+            hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
         }
 
         }

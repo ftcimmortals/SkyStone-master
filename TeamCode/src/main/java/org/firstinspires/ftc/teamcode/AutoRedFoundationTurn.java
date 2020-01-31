@@ -46,8 +46,8 @@ public class AutoRedFoundationTurn extends CommonMethods {
         hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
         hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
         hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
-        hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_DOWN);
-        hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_DOWN);
+        hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
+        hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
         hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
         hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
         hardware.deliveryServoLeft.setPosition(DELIVERY_SERVO_IN_LEFT);
@@ -79,7 +79,7 @@ public class AutoRedFoundationTurn extends CommonMethods {
         if (opModeIsActive()) {
             double angleStart = getAngle(hardware);//use the start angle as reference
             //align with foundation
-            PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 10, angleStart, hardware);
+            PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 12, angleStart, hardware);
             PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 30, angleStart, hardware);
             foundationDistance = hardware.sensorLeft.getDistance(DistanceUnit.INCH);
             PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, foundationDistance + 2, angleStart, hardware);
