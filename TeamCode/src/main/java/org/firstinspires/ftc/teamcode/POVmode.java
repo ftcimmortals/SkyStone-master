@@ -29,6 +29,8 @@ public class POVmode extends CommonMethods {
     boolean runProgram = false;
     boolean currentDrive = false;
     boolean lastDrive = false;
+    boolean currentMode = false;
+    boolean lastMode = false;
 
     //variables for levels
     int currentPosition = 0;
@@ -92,6 +94,7 @@ public class POVmode extends CommonMethods {
         //Set strings for telemetry usage
         String speedState = "MEDIUM";
         String armReset = "NO";
+        String mode = "TAPE";
 
         //set last positions for servos
         double lastPosLeft = DELIVERY_SERVO_IN_LEFT;
@@ -412,26 +415,38 @@ public class POVmode extends CommonMethods {
                     hardware.armRotateMotor.setPower(0.0);
                 }
 
-                if ((armExtend > 0) && (!gamepad2.b)){                                // left stick y to extend arm if b is not pressed
-                    hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    hardware.armExtendMotor.setPower(-armExtend * ARM_EXTEND_MULTIPLE);
-                } else if ((armExtend < 0) && (!gamepad2.b)) {                           // left stick y to collapse arm if b is not pressed
-                    hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    hardware.armExtendMotor.setPower(-armExtend * ARM_EXTEND_MULTIPLE);
-                } else {
-                    // set power to the motor to keep it extended
-                    armExtendPosition = hardware.armExtendMotor.getCurrentPosition();
-                    hardware.armExtendMotor.setTargetPosition(armExtendPosition);
-                    hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                currentMode = gamepad2.b;//when b is pressed once, change the mode
+                if((currentMode == false) && (lastMode == true)){
+                    if(mode == "ARM"){
+                        mode = "TAPE";
+                    } else if (mode == "TAPE"){
+                        mode = "ARM";
+                    }
+                }
+                if (mode == "ARM") {
+                    if (armExtend > 0) {                                // left stick y to extend arm
+                        hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                        hardware.armExtendMotor.setPower(-armExtend * ARM_EXTEND_MULTIPLE);
+                    } else if ((armExtend < 0) && (!gamepad2.b)) {                           // left stick y to collapse arm
+                        hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                        hardware.armExtendMotor.setPower(-armExtend * ARM_EXTEND_MULTIPLE);
+                    } else {
+                        // set power to the motor to keep it extended
+                        armExtendPosition = hardware.armExtendMotor.getCurrentPosition();
+                        hardware.armExtendMotor.setTargetPosition(armExtendPosition);
+                        hardware.armExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    }
+                } else if (mode == "TAPE"){
+                    if(gamepad2.left_stick_y != 0){ //if the left stick is moved
+                        hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_HALF);//move foundation grabber out of the way
+                        hardware.tapeMotor.setPower(gamepad2.left_stick_y);//set power to the stick value
+                    }else{
+                        hardware.tapeMotor.setPower(0);//stop motor
+                    }
                 }
             }
 
-            if((gamepad2.b) && (gamepad2.left_stick_y != 0)){ //if b is pressed and the left stick is moved
-                hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_HALF);//move foundation grabber out of the way
-                    hardware.tapeMotor.setPower(gamepad2.left_stick_y);//set power to the stick value
-            }else{
-                hardware.tapeMotor.setPower(0);//stop motor
-            }
+
             if (gamepad2.right_bumper) {                        // right bumper to turn wrist right 90 degrees
                 hardware.clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
             }
@@ -463,6 +478,7 @@ public class POVmode extends CommonMethods {
             telemetry.addData("Target Position: ", targetPosition);
             telemetry.addData("Current Speed: ", speedState);
             telemetry.addData("Is the arm reset? ", armReset);
+            telemetry.addData("Driver B Mode: ", mode);
 
             telemetry.update();
             //update boolean variables for one press buttons
@@ -470,6 +486,7 @@ public class POVmode extends CommonMethods {
             lastDrive = currentDrive;
             lastRun = currentRun;
             lastRun2 = currentRun2;
+            lastMode = currentMode;
 
         }
     }
