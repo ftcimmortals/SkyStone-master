@@ -50,7 +50,7 @@ abstract public class CommonMethods extends LinearOpMode {
     final public double FOUNDATION_GRABBER_LEFT_UP = 1;//grabber left up
     final public double FOUNDATION_GRABBER_RIGHT_UP = 0;//grabber right up
     final public double FOUNDATION_GRABBER_RIGHT_DOWN = 1;//grabber right down
-    final public double FOUNDATION_GRABBER_RIGHT_HALF = 0.1;//grabber right halfway for tape extention
+    final public double FOUNDATION_GRABBER_RIGHT_HALF = 0.2;//grabber right halfway for tape extention
 
     final public double DELIVERY_LEFT_OPEN_FULLY = 0.31;//delivery left open fully
     final public double DELIVERY_RIGHT_OPEN_FULLY = 0.65;//delivery right open fully
@@ -183,8 +183,8 @@ abstract public class CommonMethods extends LinearOpMode {
             }
 
             //set ramps
-            double rampdistanceUp = 10;
-            double rampdistanceDown = 5;
+            double rampdistanceUp = 20;
+            double rampdistanceDown = 20;
             double slopeup = (minPowerUp - maxPower)/(0 - rampdistanceUp);
             double slopedown = (maxPower - minPowerDown)/(0 - rampdistanceDown);
 
@@ -806,7 +806,7 @@ abstract public class CommonMethods extends LinearOpMode {
                 //set both servos to down
                 hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
                 hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_DOWN_FULLY);
-                sleep(500);
+                sleep(200);
                 //go to position is set to down before the loop
                 double goToR = SMALL_STONE_PICKER_RIGHT_DOWN;
                 double goToR2 = STONE_PICKER_RIGHT_DOWN_FULLY;
@@ -824,7 +824,7 @@ abstract public class CommonMethods extends LinearOpMode {
                 //set both servos to down
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
                 hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_DOWN_FULLY);
-                sleep(500);
+                sleep(200);
                 //go to position is set to down before the loop
                 double goToL = SMALL_STONE_PICKER_LEFT_DOWN;
                 double goToL2 = STONE_PICKER_LEFT_DOWN_FULLY;
@@ -845,7 +845,7 @@ abstract public class CommonMethods extends LinearOpMode {
                 //set positions to picking up the stone
                 hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_PICKUP);
                 hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_PICKUP);
-                sleep(500);
+                sleep(200);
                 //set go to positions to pickup before the loop
                 double goToR = SMALL_STONE_PICKER_PICKUP;
                 double goToR2 = STONE_PICKER_RIGHT_PICKUP;
@@ -863,7 +863,7 @@ abstract public class CommonMethods extends LinearOpMode {
                 //set positions to picking up the stone
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_PICKUP);
                 hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_PICKUP);
-                sleep(500);
+                sleep(200);
                 //set go to positions to pickup before the loop
                 double goToL = SMALL_STONE_PICKER_PICKUP;
                 double goToL2 = STONE_PICKER_LEFT_PICKUP;

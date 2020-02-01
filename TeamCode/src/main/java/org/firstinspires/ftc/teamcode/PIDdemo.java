@@ -131,9 +131,7 @@ public class PIDdemo extends CommonMethods {
         double blockDistance;
         if (opModeIsActive()) {
             double startAngle = getAngle(hardware);
-            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 22, startAngle, hardware);
-            PIDsideInches(GAIN_P,GAIN_I,GAIN_D,0.5,1,22, startAngle, hardware);
-            PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 22, startAngle, hardware);
+            moveTurnDegrees(0.3, 1, 90, hardware);
         }
 
     }

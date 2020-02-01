@@ -32,14 +32,15 @@ import java.util.List;
 
 
 /*
-This red autonomous mode delivers two skystones, places them on the foundation, moves the foundation, and parks, for a total of 43 points
+This red autonomous mode picks up and delivers two skystones, places them on the foundation, moves the foundation, and parks, for a total of 43 points
  */
 @Autonomous(name= "Red-BigMomma", group="Sky autonomous")
 //@Disabled
 public class AutoRedSkystonePlacingMoving extends CommonMethods {
-    //init runtime
+    //init the runtime
     private ElapsedTime runtime = new ElapsedTime();
-    //init openCV vision
+
+    //init the openCV vision
     //0 means skystone, 1 means yellow stone
     //-1 for debug, but we can keep it like this because if it works, it should change to either 0 or 255
     private static int valMid = -1;
@@ -69,7 +70,7 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
     Orientation angles;
     Acceleration gravity;
 
-    //distance from block and foundation
+    //variables for distance from the blocks and the foundation
     double blockDistance;
     double foundationDistance;
 
@@ -77,10 +78,10 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
     public void runOpMode(){
         Hardware hardware = new Hardware(hardwareMap);//init hardware
 
-        //camera view
+        //get camera view
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
-        //init camera
+        //init webcam
         webcam = new OpenCvWebcam(hardwareMap.get(WebcamName.class, "Webcam1"), cameraMonitorViewId);
 
         webcam.openCameraDevice();//open camera
@@ -91,14 +92,13 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
         hardware.armLimitTouchFront.setMode(DigitalChannel.Mode.INPUT);
         hardware.armLimitTouchBack.setMode(DigitalChannel.Mode.INPUT);
 
-        //Set direction to the motor
+        //set direction for motors
         hardware.frontLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         hardware.frontRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         hardware.backLeftDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         hardware.backRightDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         hardware.armRotateMotor.setDirection(DcMotor.Direction.REVERSE);
-        hardware.tapeMotor.setDirection(DcMotor.Direction.REVERSE);
-
+        hardware.tapeMotor.setDirection(DcMotor.Direction.FORWARD);
 
         //set servo position at init
         hardware.capstoneServo.setPosition(CAPSTONE_NOT_DROPPED);
@@ -112,7 +112,6 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
         hardware.deliveryServoRight.setPosition(DELIVERY_SERVO_IN_RIGHT);
         hardware.clawWristServo.setPosition(WRIST_TURN_HORIZONTAL);
         hardware.clawFingersServo.setPosition(FINGERS_OPEN);
-
         //init imu
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -127,7 +126,7 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
         waitForStart();
         runtime.reset();
 
-        //get angles and gravity values for imu
+        //get angles and gravity values from the imu
         angles = hardware.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         gravity = hardware.imu.getGravity();
 
@@ -138,9 +137,9 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
         double startPos = hardware.frontRightDriveMotor.getCurrentPosition();//start position of the otor
 
         if (opModeIsActive()) {
-            double angleStart = getAngle(hardware);//get start angle as a reference
+            double angleStart = getAngle(hardware);//get start reference angle
 
-            //find block and get case
+            //get block case
             for(int ii = 0; ii < 3; ii++) {
                 if (valLeft < 10) {
                     blockCase = "LEFT";
@@ -157,29 +156,31 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
                 telemetry.update();
                 sleep(100);
             }
+            hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_PICKUP);
+            hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_PICKUP);
+
             //first case
             if (blockCase == "RIGHT"){
-                //align with and pickup first stone
+                //align and pickup the first stone
                 PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 4.5, angleStart, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 22, angleStart, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 22, angleStart, hardware);
                 blockDistance = hardware.sensorLeft.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, blockDistance, angleStart, hardware);
+                moveForwardInches(0.2, false, blockDistance, hardware);
                 liftOrDropStones(-1, 1, hardware);
-                sleep(200);
-                //go to and align with foundation
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 9, angleStart, hardware);
+                //go and align to foundation
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 9, angleStart, hardware);
                 moveTurnDegrees(0.3, 1, 90, hardware);
-                sleep(500);
+                sleep(300);
                 PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 84, angleStart - 90, hardware);
                 moveTurnDegrees(0.3, -1, 90, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 3, angleStart, hardware);
-                foundationDistance = hardware.sensorRight.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, foundationDistance + 2, angleStart, hardware);
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 5, angleStart , hardware);
+                foundationDistance = hardware.sensorLeft.getDistance(DistanceUnit.INCH);
+                moveForwardInches(0.2, false, foundationDistance + 4, hardware);
                 //move and turn foundation
                 hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_DOWN);
                 hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_DOWN);
                 sleep(500);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 4, angleStart, hardware);
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.4, 1, 8, angleStart, hardware);
                 moveArchDegrees(0.5, 45, 20, 1, 1, hardware);
                 moveForwardInches(0.5, true, 10, hardware);
                 moveSideInches(0.5, true, 20, hardware);
@@ -187,59 +188,60 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
                 hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
                 hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
                 //drop stone
-                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
-                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
+                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_PICKUP);
+                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_PICKUP);
                 hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
-                //align with and pick up second stone
-                moveForwardInches(0.5, false, 15, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, 1, 96, angleStart - 90, hardware);
+                //align with and pickup second stone
+                moveForwardInches(0.5, false, 17, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, 1, 95, angleStart - 90, hardware);
                 moveTurnDegrees(0.3, -1, 90, hardware);
                 blockDistance = hardware.sensorRight.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, blockDistance, angleStart, hardware);
+                moveForwardInches(0.2, false, blockDistance, hardware);
                 liftOrDropStones(1, 1, hardware);
-                sleep(500);
                 //deliver and drop stone on foundation
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 9, angleStart, hardware);
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 9, angleStart, hardware);
                 moveTurnDegrees(0.3, 1, 90, hardware);
                 //move right foundation servo and open the tape
                 hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_HALF);//move foundation grabber out of the way
-                sleep(500);
-                int tapeticstomove = (int) (60 * ticsPerInch);
+                sleep(300);
+                int tapeticstomove = (int) (20 * ticsPerInch);
                 hardware.tapeMotor.setTargetPosition(tapeticstomove + hardware.tapeMotor.getCurrentPosition());
                 hardware.tapeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 hardware.tapeMotor.setPower(1);
-                // Go drop the second stone
                 PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 93, angleStart - 90, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 4, angleStart - 90, hardware);
-                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
-                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
+                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_PICKUP);
+                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_PICKUP);
                 hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
-                sleep(500);
-            //second case
+                tapeticstomove = (int) (30 * ticsPerInch);
+                hardware.tapeMotor.setTargetPosition(tapeticstomove + hardware.tapeMotor.getCurrentPosition());
+                hardware.tapeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                hardware.tapeMotor.setPower(1);
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.7, 1, 10, angleStart - 90, hardware);
+                sleep(1000);
+                //second case
             } else if (blockCase == "CENTER"){
                 //align with and pickup first stone
                 PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 4.5, angleStart, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 22, angleStart, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 22, angleStart, hardware);
                 blockDistance = hardware.sensorRight.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, blockDistance, angleStart, hardware);
+                moveForwardInches(0.2, false, blockDistance, hardware);
                 liftOrDropStones(1, 1, hardware);
-                sleep(200);
                 //go to and align with foundation
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 9, angleStart, hardware);
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 9, angleStart, hardware);
                 moveTurnDegrees(0.3, 1, 90, hardware);
-                sleep(500);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 83, angleStart - 90, hardware);
+                sleep(300);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 82, angleStart - 90, hardware);
                 moveTurnDegrees(0.3, -1, 90, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 3, angleStart, hardware);
-                foundationDistance = hardware.sensorRight.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, foundationDistance + 2, angleStart, hardware);
+                moveForwardInches(0.3, false, 5, hardware);
+                foundationDistance = hardware.sensorLeft.getDistance(DistanceUnit.INCH);
+                moveForwardInches(0.2, false, foundationDistance + 4, hardware);
                 //move and turn foundation
                 hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_DOWN);
                 hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_DOWN);
                 sleep(500);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.5, 1, 4, angleStart, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, 1, 8, angleStart, hardware);
                 moveArchDegrees(0.5, 45, 20, 1, 1, hardware);
                 moveForwardInches(0.5, true, 10, hardware);
                 moveSideInches(0.5, true, 20, hardware);
@@ -247,59 +249,61 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
                 hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
                 hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
                 //drop stone
-                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
-                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
+                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_PICKUP);
+                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_PICKUP);
                 hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
                 //align with and pickup second stone
                 moveForwardInches(0.5, false, 15, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, 1, 105, angleStart - 90, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, 1, 103, angleStart - 90, hardware);
                 moveTurnDegrees(0.3, -1, 90, hardware);
                 blockDistance = hardware.sensorRight.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, blockDistance, angleStart, hardware);
+                moveForwardInches(0.2, false, blockDistance, hardware);
                 liftOrDropStones(1, 1, hardware);
-                sleep(200);
                 //deliver and drop stone on foundation
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 9, angleStart, hardware);
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.4, 1, 9, angleStart, hardware);
                 moveTurnDegrees(0.3, 1, 90, hardware);
                 //move right foundation servo and open the tape
                 hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_HALF);//move foundation grabber out of the way
-                sleep(500);
-                int tapeticstomove = (int) (60 * ticsPerInch);
+                sleep(300);
+                int tapeticstomove = (int) (20 * ticsPerInch);
                 hardware.tapeMotor.setTargetPosition(tapeticstomove + hardware.tapeMotor.getCurrentPosition());
                 hardware.tapeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 hardware.tapeMotor.setPower(1);
-                // Go drop the second stone
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 105, angleStart - 90, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 107, angleStart - 90, hardware);
                 PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 4, angleStart - 90, hardware);
-                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
-                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
+                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_PICKUP);
+                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_PICKUP);
                 hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
-                sleep(500);
-            //third case
+                tapeticstomove = (int) (30 * ticsPerInch);
+                hardware.tapeMotor.setTargetPosition(tapeticstomove + hardware.tapeMotor.getCurrentPosition());
+                hardware.tapeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                hardware.tapeMotor.setPower(1);
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.7, 1, 10, angleStart - 90, hardware);
+                sleep(1000);
+                //third case
             } else {
                 //align with and pickup first stone
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 3.5, angleStart, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, -1, 22, angleStart, hardware);
+                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 4.5, angleStart, hardware);
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.5, -1, 22, angleStart, hardware);
                 blockDistance = hardware.sensorRight.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, blockDistance, angleStart, hardware);
+                moveForwardInches(0.2, false, blockDistance, hardware);
                 liftOrDropStones(1, 1, hardware);
-                sleep(200);
-                //go to and align with foundation
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 9, angleStart, hardware);
+                //go to and align with the foundation
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.4, 1, 9, angleStart, hardware);
                 moveTurnDegrees(0.3, 1, 90, hardware);
-                sleep(500);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.7, -1, 92, angleStart - 90, hardware);
+                sleep(300);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.7, -1, 88, angleStart - 90, hardware);
                 moveTurnDegrees(0.3, -1, 90, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 3, angleStart, hardware);
-                foundationDistance = hardware.sensorRight.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, foundationDistance + 2, angleStart, hardware);
-                //move and turn foundation
+                moveForwardInches(0.3, false, 5, hardware);
+                foundationDistance = hardware.sensorLeft.getDistance(DistanceUnit.INCH);
+                moveForwardInches(0.2, false, foundationDistance + 4, hardware);
+                //move and turn the foundation
                 hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_DOWN);
                 hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_DOWN);
                 sleep(500);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, 1, 4, angleStart, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.6, 1, 8, angleStart, hardware);
                 moveArchDegrees(0.5, 45, 20, 1, 1, hardware);
                 moveForwardInches(0.5, true, 10, hardware);
                 moveSideInches(0.5, true, 20, hardware);
@@ -307,42 +311,43 @@ public class AutoRedSkystonePlacingMoving extends CommonMethods {
                 hardware.foundationGrabberServoLeft.setPosition(FOUNDATION_GRABBER_LEFT_UP);
                 hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_UP);
                 //drop stone
-                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
-                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
+                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_PICKUP);
+                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_PICKUP);
                 hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
                 //align with and pickup second stone
                 moveForwardInches(0.5, false, 15, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.7, 1, 105, angleStart - 90, hardware);
-                moveTurnDegrees(0.5, -1, 90, hardware);
-                PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 11, angleStart, hardware);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.7, 1, 101, angleStart - 90, hardware);
+                moveTurnDegrees(0.3, -1, 90, hardware);
+                moveSideInches(0.3, true, 11, hardware);
                 blockDistance = hardware.sensorRight.getDistance(DistanceUnit.INCH);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.15, -1, blockDistance, angleStart, hardware);
+                moveForwardInches(0.2, false, blockDistance, hardware);
                 liftOrDropStones(1, 1, hardware);
-                sleep(200);
                 //deliver and drop stone on foundation
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 9, angleStart, hardware);
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.3, 1, 9, angleStart, hardware);
                 PIDsideInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 11, angleStart, hardware);
                 moveTurnDegrees(0.3, 1, 90, hardware);
                 //move right foundation servo and open the tape
                 hardware.foundationGrabberServoRight.setPosition(FOUNDATION_GRABBER_RIGHT_HALF);//move foundation grabber out of the way
-                sleep(500);
-                int tapeticstomove = (int) (60 * ticsPerInch);
+//                sleep(300);
+                int tapeticstomove = (int) (20 * ticsPerInch);
                 hardware.tapeMotor.setTargetPosition(tapeticstomove + hardware.tapeMotor.getCurrentPosition());
                 hardware.tapeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 hardware.tapeMotor.setPower(1);
-                // Go drop the second stone
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.7, -1, 102, angleStart - 90, hardware);
-                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.3, -1, 4, angleStart - 90, hardware);
-                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_UP);
-                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_UP);
+                PIDstraightInches(GAIN_P, GAIN_I, GAIN_D, 0.7, -1, 100, angleStart - 90, hardware);
+                hardware.stoneServoLeft.setPosition(STONE_PICKER_LEFT_PICKUP);
+                hardware.stoneServoRight.setPosition(STONE_PICKER_RIGHT_PICKUP);
                 hardware.smallStoneServoRight.setPosition(SMALL_STONE_PICKER_RIGHT_DOWN);
                 hardware.smallStoneServoLeft.setPosition(SMALL_STONE_PICKER_LEFT_DOWN);
-                sleep(500);
-            }
+                tapeticstomove = (int) (30 * ticsPerInch);
+                hardware.tapeMotor.setTargetPosition(tapeticstomove + hardware.tapeMotor.getCurrentPosition());
+                hardware.tapeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                hardware.tapeMotor.setPower(1);
+                PIDstraightInchesNoRamp(GAIN_P, GAIN_I, GAIN_D, 0.7, 1, 10, angleStart - 90, hardware);
+                sleep(1000);            }
         }
     }
-//OpenCV functions below
+    //openCV functions below
     //detection pipeline
     static class StageSwitchingPipeline extends OpenCvPipeline
     {
